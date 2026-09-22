@@ -1,122 +1,258 @@
-import os
 import glob
+import os
 import pandas as pd
 import streamlit as st
 
-# 페이지 기본 설정
+# 1. 페이지 기본 설정
 st.set_page_config(
-    page_title="2028 대입 과목 이수 가이드",
+    page_title="2028 대입 대학별 권장과목 조회기 | 파로스 대입 랩",
     page_icon="🎓",
-    layout="wide"
+    layout="wide",
 )
 
-# 1. 엑셀 파일 로드 함수
+# 2. 디자인 스타일 적용 (상단 깃허브/메뉴 숨김 및 깔끔한 카드 레이아웃)
+st.markdown(
+    """
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    * { font-family: 'Pretendard', sans-serif; }
+    
+    .main-title {
+        font-size: 2.1rem;
+        font-weight: 800;
+        color: #1E3A8A;
+        margin-bottom: 0.3rem;
+    }
+    .sub-title {
+        font-size: 1.02rem;
+        color: #4B5563;
+        margin-bottom: 1.5rem;
+    }
+    .guide-box {
+        background-color: #F8FAFC;
+        border-left: 5px solid #2563EB;
+        padding: 1.1rem 1.3rem;
+        border-radius: 8px;
+        margin-bottom: 1.6rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        line-height: 1.65;
+    }
+    .result-card {
+        background-color: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 10px;
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+    .badge-core {
+        background-color: #FEE2E2;
+        color: #B91C1C;
+        padding: 3px 8px;
+        border-radius: 5px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-right: 6px;
+    }
+    .badge-recommend {
+        background-color: #DBEAFE;
+        color: #1D4ED8;
+        padding: 3px 8px;
+        border-radius: 5px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-right: 6px;
+    }
+    .badge-ref {
+        background-color: #FEF3C7;
+        color: #92400E;
+        padding: 3px 8px;
+        border-radius: 5px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-right: 6px;
+    }
+    .univ-tag {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #111827;
+    }
+    .major-tag {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #2563EB;
+        margin-left: 6px;
+    }
+    .footer-text {
+        text-align: center;
+        color: #9CA3AF;
+        font-size: 0.88rem;
+        margin-top: 3rem;
+        border-top: 1px solid #E5E7EB;
+        padding-top: 1.5rem;
+    }
+    </style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# 3. 엑셀 데이터 정밀 로드 함수
 @st.cache_data
 def load_data():
-    # 저장소 내 xlsx 파일 자동 탐색 (없을 시 파일 업로더 지원)
     xlsx_files = glob.glob("*.xlsx")
-    if xlsx_files:
-        filepath = xlsx_files[0]
-        df = pd.read_excel(filepath)
-    else:
-        uploaded_file = st.sidebar.file_uploader("엑셀 파일(.xlsx)을 업로드하세요", type=["xlsx"])
-        if uploaded_file is not None:
-            df = pd.read_excel(uploaded_file)
-        else:
-            return None
-
-    # 유연한 열 이름 매핑 로직
-    def get_col(candidates, exclude=None):
-        for col in df.columns:
-            clean = str(col).replace(" ", "").replace("\n", "").strip()
-            if exclude and any(ex in clean for ex in exclude):
-                continue
-            for cand in candidates:
-                if cand in clean:
-                    return col
+    if not xlsx_files:
         return None
 
-    col_univ = get_col(["대학명", "대학교", "대학", "학교명"])
-    col_dept = get_col(["모집단위", "학과", "학부", "전공", "계열"])
-    col_core = get_col(["핵심권장", "핵심과목", "핵심"])
-    col_recom = get_col(["권장과목", "권장"], exclude=["핵심"])
-    col_note = get_col(["비고", "참조", "특이사항", "참고사항", "안내"])
-    col_region = get_col(["권역", "시도", "지역"])
+    filepath = xlsx_files[0]
+    # 엑셀 원본 구조를 헤더 없이 전체 로드
+    df_raw = pd.read_excel(filepath, header=None)
 
-    # 필수 열 매핑 및 이름 정규화
-    mapping = {}
-    if col_region:
-        mapping[col_region] = "지역"
-    if col_univ:
-        mapping[col_univ] = "대학명"
-    if col_dept:
-        mapping[col_dept] = "모집단위(학과)"
-    if col_core:
-        mapping[col_core] = "핵심권장과목"
-    if col_recom:
-        mapping[col_recom] = "권장과목"
-    if col_note:
-        mapping[col_note] = "참조"
+    # 실제 데이터가 시작되는 행 번호 탐색 (5번째 행: 인덱스 4)
+    start_row = 4
+    for idx, row in df_raw.iloc[:10].iterrows():
+        row_vals = [str(x).strip() for x in row.values]
+        if "수도권" in row_vals or "가톨릭대" in row_vals:
+            start_row = idx
+            break
 
-    df = df.rename(columns=mapping)
+    # 5번째 행부터 실제 데이터 슬라이싱
+    df_data = df_raw.iloc[start_row:].copy().reset_index(drop=True)
+    df_data = df_data.iloc[:, :8]
+    df_data.columns = [
+        "권역",
+        "지역",
+        "대학명",
+        "계열_단과대",
+        "세부학과",
+        "핵심과목",
+        "권장과목",
+        "비고",
+    ]
 
-    # 기본 열이 없을 경우 빈 열 생성
-    target_cols = ["대학명", "모집단위(학과)", "핵심권장과목", "권장과목", "참조"]
-    if "지역" in df.columns:
-        target_cols.insert(0, "지역")
+    # 문자열 결측치 및 공백 정돈
+    for col in df_data.columns:
+        df_data[col] = (
+            df_data[col]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+            .replace({"nan": "", "None": ""})
+        )
 
-    for col in target_cols:
-        if col not in df.columns:
-            df[col] = "-"
+    # 대학명 내 줄바꿈(예: '강원대\n(춘천)') 제거
+    df_data["대학명"] = (
+        df_data["대학명"]
+        .str.replace("\n", " ")
+        .str.replace(r"\s+", " ", regex=True)
+        .str.strip()
+    )
 
-    # 결측치 정돈
-    df[target_cols] = df[target_cols].fillna("-").astype(str)
-    return df[target_cols]
+    # 학과 및 계열 융합 표기 로직
+    def format_dept(r):
+        c_sub = r["세부학과"]
+        c_main = r["계열_단과대"]
+        if c_sub and c_sub not in ["-", ""]:
+            if c_main and c_main not in ["-", "", c_sub]:
+                return f"{c_sub} ({c_main})"
+            return c_sub
+        return c_main
+
+    df_data["모집단위(학과)"] = df_data.apply(format_dept, axis=1)
+
+    # 과목 및 '참조' 열 정리
+    df_data["핵심권장과목"] = df_data["핵심과목"].replace(
+        {"": "-", "nan": "-"}
+    )
+    df_data["권장과목"] = df_data["권장과목"].replace(
+        {"": "-", "nan": "-"}
+    )
+    df_data["참조"] = df_data["비고"].replace({"": "-", "nan": "-"})
+
+    # 유효한 행만 필터링
+    df_data = df_data[df_data["대학명"] != ""]
+    return df_data[
+        ["지역", "대학명", "모집단위(학과)", "핵심권장과목", "권장과목", "참조"]
+    ]
 
 
-# 메인 화면 구성
-st.title("🎓 대입 권장과목 & 전공 연계 가이드")
-st.caption("대학별 모집단위의 핵심권장과목, 권장과목 및 참조(비고) 사항을 검색합니다.")
+# 4. 화면 타이틀 및 안내문
+st.markdown(
+    '<div class="main-title">🎓 2028 대입 대학별 권장과목 조회기</div>',
+    unsafe_allow_html=True,
+)
+st.markdown(
+    '<div class="sub-title">파로스 대입 랩 | 2028 대입 개편안 및 고교학점제 선택과목 가이드</div>',
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    """
+<div class="guide-box">
+    <strong>💡 권장과목 및 참조 안내</strong><br>
+    • <strong>핵심권장과목:</strong> 학과 수학을 위해 고교 재학 중 <em>반드시 이수할 것을 강력히 권장</em>하는 과목입니다.<br>
+    • <strong>권장과목:</strong> 전공 학업에 실질적 도움이 되어 <em>가급적 이수를 권장</em>하는 과목입니다.<br>
+    • <strong>참조:</strong> 이수 과목 수(예: 3과목 이상), 과목 선택 위계, 평가 반영 방식 등 <strong>대학별 필수 확인 조건</strong>이 안내됩니다.
+</div>
+""",
+    unsafe_allow_html=True,
+)
 
 data = load_data()
 
 if data is None:
-    st.info("💡 GitHub 저장소에 엑셀 파일(.xlsx)을 업로드하거나, 좌측 사이드바에서 파일을 직접 등록해 주세요.")
+    st.error(
+        "❌ 엑셀 파일(.xlsx)을 찾을 수 없습니다. 저장소에 파일이 등록되어 있는지 확인해 주세요."
+    )
 else:
-    # 검색 및 필터 영역
-    with st.container():
-        col1, col2, col3 = st.columns([1.5, 2, 2])
+    # 5. 검색 및 필터 컨트롤
+    col1, col2, col3 = st.columns([1.5, 2, 2])
 
-        with col1:
-            univ_list = ["전체"] + sorted([u for u in data["대학명"].unique() if u != "-"])
-            selected_univ = st.selectbox("🏫 대학 선택", univ_list)
+    with col1:
+        univ_list = ["전체"] + sorted(
+            [u for u in data["대학명"].unique() if u != "-"]
+        )
+        selected_univ = st.selectbox("🏫 대학 선택", univ_list)
 
-        with col2:
-            search_dept = st.text_input("🔍 모집단위(학과) 검색", placeholder="예: 컴퓨터, 경영, 의예")
+    with col2:
+        search_dept = st.text_input(
+            "🔍 모집단위(학과) 검색", placeholder="예: 컴퓨터, 경영, 의예, 간호"
+        )
 
-        with col3:
-            search_subject = st.text_input("📚 권장과목 검색", placeholder="예: 미적분, 물리학, 화학")
+    with col3:
+        search_subject = st.text_input(
+            "📚 권장과목 검색", placeholder="예: 미적분, 물리학, 화학, 기하"
+        )
 
-    # 필터링 적용
+    # 필터링 로직
     filtered_df = data.copy()
 
     if selected_univ != "전체":
         filtered_df = filtered_df[filtered_df["대학명"] == selected_univ]
 
     if search_dept.strip():
-        filtered_df = filtered_df[filtered_df["모집단위(학과)"].str.contains(search_dept.strip(), case=False, na=False)]
-
-    if search_subject.strip():
-        sub_query = search_subject.strip()
         filtered_df = filtered_df[
-            filtered_df["핵심권장과목"].str.contains(sub_query, case=False, na=False) |
-            filtered_df["권장과목"].str.contains(sub_query, case=False, na=False)
+            filtered_df["모집단위(학과)"].str.contains(
+                search_dept.strip(), case=False, na=False
+            )
         ]
 
-    st.markdown("---")
+    if search_subject.strip():
+        sub_q = search_subject.strip()
+        filtered_df = filtered_df[
+            filtered_df["핵심권장과목"].str.contains(
+                sub_q, case=False, na=False
+            )
+            | filtered_df["권장과목"].str.contains(sub_q, case=False, na=False)
+        ]
+
     st.markdown(f"**검색 결과: 총 `{len(filtered_df):,}`건**")
 
-    # 테이블 뷰
+    # 6. 테이블 뷰 (표)
     st.dataframe(
         filtered_df,
         use_container_width=True,
@@ -124,28 +260,59 @@ else:
         column_config={
             "지역": st.column_config.TextColumn("지역", width="small"),
             "대학명": st.column_config.TextColumn("대학명", width="medium"),
-            "모집단위(학과)": st.column_config.TextColumn("모집단위(학과)", width="large"),
-            "핵심권장과목": st.column_config.TextColumn("핵심권장과목", width="large"),
+            "모집단위(학과)": st.column_config.TextColumn(
+                "모집단위(학과)", width="large"
+            ),
+            "핵심권장과목": st.column_config.TextColumn(
+                "핵심권장과목", width="large"
+            ),
             "권장과목": st.column_config.TextColumn("권장과목", width="large"),
             "참조": st.column_config.TextColumn("참조 (비고)", width="large"),
-        }
+        },
     )
 
-    # 주요 참조사항 강조 상세 카드 (선택 시 열람)
+    # 7. 상세 카드 뷰 (참조사항 줄바꿈 지원)
     if not filtered_df.empty:
-        with st.expander("📌 상세 카드 뷰로 보기 (참조사항 포함)"):
-            for idx, row in filtered_df.head(20).iterrows():
-                with st.container():
-                    st.markdown(f"#### **{row['대학명']}** - {row['모집단위(학과)']}")
-                    c1, c2 = st.columns(2)
-                    with c1:
-                        st.markdown(f"**• 핵심권장:** {row['핵심권장과목']}")
-                    with c2:
-                        st.markdown(f"**• 일반권장:** {row['권장과목']}")
-                    
-                    if row["참조"] != "-":
-                        st.info(f"**💡 참조:** {row['참조']}")
-                    st.divider()
-            
-            if len(filtered_df) > 20:
-                st.caption("상세 카드 뷰는 상위 20건까지만 표시됩니다. 전체 내역은 상단 표에서 확인하세요.")
+        with st.expander("📌 대학별 상세 카드 뷰로 확인하기 (참조 내용 강조)"):
+            for idx, row in filtered_df.head(25).iterrows():
+                ref_text = row["참조"]
+                ref_html = (
+                    f"""
+                    <div style="margin-top: 8px; line-height: 1.6; color: #374151; background: #FFFBEB; padding: 10px; border-radius: 6px; border: 1px solid #FDE68A;">
+                        <span class="badge-ref">참조</span> {ref_text.replace(chr(10), '<br>')}
+                    </div>
+                """
+                    if ref_text != "-"
+                    else ""
+                )
+
+                card_html = f"""
+                <div class="result-card">
+                    <div style="margin-bottom: 8px;">
+                        <span class="univ-tag">{row['대학명']}</span>
+                        <span class="major-tag">| {row['모집단위(학과)']}</span>
+                        <span style="color: #6B7280; font-size: 0.85rem; margin-left: 8px;">({row['지역']})</span>
+                    </div>
+                    <div style="line-height: 1.8; margin-top: 6px;">
+                        <span class="badge-core">핵심 권장</span> <span style="font-weight: 500;">{row['핵심권장과목']}</span><br>
+                        <span class="badge-recommend">일반 권장</span> <span style="font-weight: 500;">{row['권장과목']}</span>
+                    </div>
+                    {ref_html}
+                </div>
+                """
+                st.markdown(card_html, unsafe_allow_html=True)
+
+            if len(filtered_df) > 25:
+                st.caption(
+                    "상세 카드 뷰는 상위 25건까지만 표시됩니다. 전체 목록은 상단 표에서 확인하실 수 있습니다."
+                )
+
+    # 하단 브랜딩 푸터
+    st.markdown(
+        """
+        <div class="footer-text">
+            © 파로스 대입 랩 (PHAROS LAB) | 2028 대입 개편안 전공 연계 권장과목 연구 자료
+        </div>
+    """,
+        unsafe_allow_html=True,
+    )
