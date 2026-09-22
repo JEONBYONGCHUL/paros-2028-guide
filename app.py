@@ -5,12 +5,12 @@ import streamlit as st
 
 # 1. 페이지 기본 설정
 st.set_page_config(
-    page_title="2028 대입 대학별 권장과목 조회기 | 파로스 대입 랩",
+    page_title="2028 대학별 권장과목 조회 | 파로스대입랩",
     page_icon="🎓",
     layout="wide",
 )
 
-# 2. 디자인 스타일 적용 (상단 깃허브/메뉴 숨김 및 깔끔한 카드 레이아웃)
+# 2. 디자인 스타일 적용 (상단 메뉴/깃허브 링크 숨김 및 카드 스타일)
 st.markdown(
     """
     <style>
@@ -28,9 +28,17 @@ st.markdown(
         margin-bottom: 0.3rem;
     }
     .sub-title {
-        font-size: 1.02rem;
-        color: #4B5563;
+        font-size: 1.05rem;
+        color: #374151;
         margin-bottom: 1.5rem;
+    }
+    .sub-title a {
+        color: #2563EB;
+        text-decoration: underline;
+        font-weight: 600;
+    }
+    .sub-title a:hover {
+        color: #1D4ED8;
     }
     .guide-box {
         background-color: #F8FAFC;
@@ -109,10 +117,9 @@ def load_data():
         return None
 
     filepath = xlsx_files[0]
-    # 엑셀 원본 구조를 헤더 없이 전체 로드
     df_raw = pd.read_excel(filepath, header=None)
 
-    # 실제 데이터가 시작되는 행 번호 탐색 (5번째 행: 인덱스 4)
+    # 실제 데이터 시작 행 탐색 (5번째 행)
     start_row = 4
     for idx, row in df_raw.iloc[:10].iterrows():
         row_vals = [str(x).strip() for x in row.values]
@@ -120,7 +127,6 @@ def load_data():
             start_row = idx
             break
 
-    # 5번째 행부터 실제 데이터 슬라이싱
     df_data = df_raw.iloc[start_row:].copy().reset_index(drop=True)
     df_data = df_data.iloc[:, :8]
     df_data.columns = [
@@ -134,7 +140,6 @@ def load_data():
         "비고",
     ]
 
-    # 문자열 결측치 및 공백 정돈
     for col in df_data.columns:
         df_data[col] = (
             df_data[col]
@@ -144,7 +149,7 @@ def load_data():
             .replace({"nan": "", "None": ""})
         )
 
-    # 대학명 내 줄바꿈(예: '강원대\n(춘천)') 제거
+    # 대학명 줄바꿈 제거
     df_data["대학명"] = (
         df_data["대학명"]
         .str.replace("\n", " ")
@@ -152,7 +157,7 @@ def load_data():
         .str.strip()
     )
 
-    # 학과 및 계열 융합 표기 로직
+    # 학과 및 계열 융합 표기
     def format_dept(r):
         c_sub = r["세부학과"]
         c_main = r["계열_단과대"]
@@ -163,8 +168,6 @@ def load_data():
         return c_main
 
     df_data["모집단위(학과)"] = df_data.apply(format_dept, axis=1)
-
-    # 과목 및 '참조' 열 정리
     df_data["핵심권장과목"] = df_data["핵심과목"].replace(
         {"": "-", "nan": "-"}
     )
@@ -173,20 +176,19 @@ def load_data():
     )
     df_data["참조"] = df_data["비고"].replace({"": "-", "nan": "-"})
 
-    # 유효한 행만 필터링
     df_data = df_data[df_data["대학명"] != ""]
     return df_data[
         ["지역", "대학명", "모집단위(학과)", "핵심권장과목", "권장과목", "참조"]
     ]
 
 
-# 4. 화면 타이틀 및 안내문
+# 4. 상단 타이틀 및 네이버 블로그 링크 (요청 사항 반영)
 st.markdown(
-    '<div class="main-title">🎓 2028 대입 대학별 권장과목 조회기</div>',
+    '<div class="main-title">🎓 2028 대학별 권장과목 조회</div>',
     unsafe_allow_html=True,
 )
 st.markdown(
-    '<div class="sub-title">파로스 대입 랩 | 2028 대입 개편안 및 고교학점제 선택과목 가이드</div>',
+    '<div class="sub-title">파로스대입랩 네이버블로그 <a href="http://blog.naver.com/pharoslab" target="_blank">http://blog.naver.com/pharoslab</a></div>',
     unsafe_allow_html=True,
 )
 
@@ -271,35 +273,35 @@ else:
         },
     )
 
-    # 7. 상세 카드 뷰 (참조사항 줄바꿈 지원)
+    # 7. 상세 카드 뷰 (코드 노출 방지를 위해 들여쓰기 공백 원천 제거)
     if not filtered_df.empty:
         with st.expander("📌 대학별 상세 카드 뷰로 확인하기 (참조 내용 강조)"):
             for idx, row in filtered_df.head(25).iterrows():
                 ref_text = row["참조"]
-                ref_html = (
-                    f"""
-                    <div style="margin-top: 8px; line-height: 1.6; color: #374151; background: #FFFBEB; padding: 10px; border-radius: 6px; border: 1px solid #FDE68A;">
-                        <span class="badge-ref">참조</span> {ref_text.replace(chr(10), '<br>')}
-                    </div>
-                """
-                    if ref_text != "-"
-                    else ""
+
+                # 참조 박스 HTML (들여쓰기 없는 단일 문자열로 구성하여 마크다운 코드블록 변환 방지)
+                if ref_text != "-":
+                    ref_clean = ref_text.replace("\n", "<br>")
+                    ref_part = f'<div style="margin-top: 10px; line-height: 1.6; color: #374151; background-color: #FFFBEB; padding: 10px 14px; border-radius: 6px; border: 1px solid #FDE68A;"><span class="badge-ref">참조</span> {ref_clean}</div>'
+                else:
+                    ref_part = ""
+
+                # 전체 카드 HTML (각 줄 맨 앞 공백 0으로 생성)
+                card_html = (
+                    f'<div class="result-card">'
+                    f'<div style="margin-bottom: 8px;">'
+                    f'<span class="univ-tag">{row["대학명"]}</span>'
+                    f'<span class="major-tag">| {row["모집단위(학과)"]}</span>'
+                    f'<span style="color: #6B7280; font-size: 0.85rem; margin-left: 8px;">({row["지역"]})</span>'
+                    f"</div>"
+                    f'<div style="line-height: 1.8; margin-top: 6px;">'
+                    f'<span class="badge-core">핵심 권장</span> <span style="font-weight: 500;">{row["핵심권장과목"]}</span><br>'
+                    f'<span class="badge-recommend">일반 권장</span> <span style="font-weight: 500;">{row["권장과목"]}</span>'
+                    f"</div>"
+                    f"{ref_part}"
+                    f"</div>"
                 )
 
-                card_html = f"""
-                <div class="result-card">
-                    <div style="margin-bottom: 8px;">
-                        <span class="univ-tag">{row['대학명']}</span>
-                        <span class="major-tag">| {row['모집단위(학과)']}</span>
-                        <span style="color: #6B7280; font-size: 0.85rem; margin-left: 8px;">({row['지역']})</span>
-                    </div>
-                    <div style="line-height: 1.8; margin-top: 6px;">
-                        <span class="badge-core">핵심 권장</span> <span style="font-weight: 500;">{row['핵심권장과목']}</span><br>
-                        <span class="badge-recommend">일반 권장</span> <span style="font-weight: 500;">{row['권장과목']}</span>
-                    </div>
-                    {ref_html}
-                </div>
-                """
                 st.markdown(card_html, unsafe_allow_html=True)
 
             if len(filtered_df) > 25:
@@ -307,11 +309,11 @@ else:
                     "상세 카드 뷰는 상위 25건까지만 표시됩니다. 전체 목록은 상단 표에서 확인하실 수 있습니다."
                 )
 
-    # 하단 브랜딩 푸터
+    # 8. 하단 브랜딩 푸터
     st.markdown(
         """
         <div class="footer-text">
-            © 파로스 대입 랩 (PHAROS LAB) | 2028 대입 개편안 전공 연계 권장과목 연구 자료
+            © 파로스대입랩 | 2028 대입 전공 연계 권장과목 연구 자료
         </div>
     """,
         unsafe_allow_html=True,
