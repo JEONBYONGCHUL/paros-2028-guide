@@ -10,7 +10,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# 2. 디자인 스타일 적용 (상단 메뉴/깃허브 링크 숨김 및 카드 스타일)
+# 2. 디자인 스타일 적용 (상단 메뉴 숨김 및 테이블 스타일)
 st.markdown(
     """
     <style>
@@ -30,7 +30,7 @@ st.markdown(
     .sub-title {
         font-size: 1.05rem;
         color: #374151;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.2rem;
     }
     .sub-title a {
         color: #2563EB;
@@ -47,7 +47,9 @@ st.markdown(
         border-radius: 8px;
         margin-bottom: 1.6rem;
         box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-        line-height: 1.65;
+        line-height: 1.8;
+        font-size: 0.96rem;
+        color: #1F2937;
     }
     .result-card {
         background-color: #FFFFFF;
@@ -94,6 +96,9 @@ st.markdown(
         font-weight: 600;
         color: #2563EB;
         margin-left: 6px;
+    }
+    .custom-table tr:hover {
+        background-color: #F8FAFC;
     }
     .footer-text {
         text-align: center;
@@ -149,7 +154,7 @@ def load_data():
             .replace({"nan": "", "None": ""})
         )
 
-    # 대학명 줄바꿈 제거
+    # 대학명 줄바꿈 정리
     df_data["대학명"] = (
         df_data["대학명"]
         .str.replace("\n", " ")
@@ -157,7 +162,7 @@ def load_data():
         .str.strip()
     )
 
-    # 학과 및 계열 융합 표기
+    # 학과 및 계열 표기 결합
     def format_dept(r):
         c_sub = r["세부학과"]
         c_main = r["계열_단과대"]
@@ -182,7 +187,7 @@ def load_data():
     ]
 
 
-# 4. 상단 타이틀 및 네이버 블로그 링크 (요청 사항 반영)
+# 4. 상단 타이틀 및 안내문 (요청 사항 반영)
 st.markdown(
     '<div class="main-title">🎓 2028 대학별 권장과목 조회</div>',
     unsafe_allow_html=True,
@@ -192,13 +197,12 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# 한 줄 띄우고 핵심 2개 안내만 배치
 st.markdown(
     """
 <div class="guide-box">
-    <strong>💡 권장과목 및 참조 안내</strong><br>
     • <strong>핵심권장과목:</strong> 학과 수학을 위해 고교 재학 중 <em>반드시 이수할 것을 강력히 권장</em>하는 과목입니다.<br>
-    • <strong>권장과목:</strong> 전공 학업에 실질적 도움이 되어 <em>가급적 이수를 권장</em>하는 과목입니다.<br>
-    • <strong>참조:</strong> 이수 과목 수(예: 3과목 이상), 과목 선택 위계, 평가 반영 방식 등 <strong>대학별 필수 확인 조건</strong>이 안내됩니다.
+    • <strong>권장과목:</strong> 전공 학업에 실질적 도움이 되어 <em>가급적 이수를 권장</em>하는 과목입니다.
 </div>
 """,
     unsafe_allow_html=True,
@@ -222,7 +226,7 @@ else:
 
     with col2:
         search_dept = st.text_input(
-            "🔍 모집단위(학과) 검색", placeholder="예: 컴퓨터, 경영, 의예, 간호"
+            "🔍 모집단위(학과) 검색", placeholder="예: 컴퓨터, 경영, 의예, 간호, 데이터"
         )
 
     with col3:
@@ -254,39 +258,58 @@ else:
 
     st.markdown(f"**검색 결과: 총 `{len(filtered_df):,}`건**")
 
-    # 6. 테이블 뷰 (표)
-    st.dataframe(
-        filtered_df,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "지역": st.column_config.TextColumn("지역", width="small"),
-            "대학명": st.column_config.TextColumn("대학명", width="medium"),
-            "모집단위(학과)": st.column_config.TextColumn(
-                "모집단위(학과)", width="large"
-            ),
-            "핵심권장과목": st.column_config.TextColumn(
-                "핵심권장과목", width="large"
-            ),
-            "권장과목": st.column_config.TextColumn("권장과목", width="large"),
-            "참조": st.column_config.TextColumn("참조 (비고)", width="large"),
-        },
-    )
+    # 6. 표 출력 (문장 잘림 방지 및 자동 줄바꿈 지원)
+    if filtered_df.empty:
+        st.warning("선택하신 조건에 일치하는 데이터가 없습니다.")
+    else:
+        rows_html = []
+        for _, row in filtered_df.iterrows():
+            core_cell = str(row["핵심권장과목"]).replace("\n", "<br>")
+            recom_cell = str(row["권장과목"]).replace("\n", "<br>")
+            ref_cell = str(row["참조"]).replace("\n", "<br>")
 
-    # 7. 상세 카드 뷰 (코드 노출 방지를 위해 들여쓰기 공백 원천 제거)
+            rows_html.append(
+                f'<tr style="border-bottom: 1px solid #E2E8F0;">'
+                f'<td style="padding: 12px 14px; font-weight: 700; white-space: nowrap; vertical-align: top; color: #111827;">{row["대학명"]}</td>'
+                f'<td style="padding: 12px 14px; font-weight: 600; color: #2563EB; vertical-align: top; line-height: 1.5;">{row["모집단위(학과)"]}</td>'
+                f'<td style="padding: 12px 14px; vertical-align: top; line-height: 1.6; color: #1F2937;">{core_cell}</td>'
+                f'<td style="padding: 12px 14px; vertical-align: top; line-height: 1.6; color: #1F2937;">{recom_cell}</td>'
+                f'<td style="padding: 12px 14px; vertical-align: top; line-height: 1.6; color: #374151; font-size: 0.92rem; word-break: keep-all;">{ref_cell}</td>'
+                f"</tr>"
+            )
+
+        table_html = (
+            f'<div style="max-height: 650px; overflow-y: auto; border: 1px solid #CBD5E1; border-radius: 8px; margin-bottom: 1.6rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">'
+            f'<table class="custom-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.93rem; background-color: #FFFFFF;">'
+            f'<thead style="background-color: #F8FAFC; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #CBD5E1;">'
+            f"<tr>"
+            f'<th style="padding: 12px 14px; width: 13%; color: #1E293B; font-weight: 700;">대학명</th>'
+            f'<th style="padding: 12px 14px; width: 22%; color: #1E293B; font-weight: 700;">모집단위(학과)</th>'
+            f'<th style="padding: 12px 14px; width: 23%; color: #1E293B; font-weight: 700;">핵심권장과목</th>'
+            f'<th style="padding: 12px 14px; width: 17%; color: #1E293B; font-weight: 700;">권장과목</th>'
+            f'<th style="padding: 12px 14px; width: 25%; color: #1E293B; font-weight: 700;">참조</th>'
+            f"</tr>"
+            f"</thead>"
+            f"<tbody>"
+            f'{"".join(rows_html)}'
+            f"</tbody>"
+            f"</table>"
+            f"</div>"
+        )
+        st.markdown(table_html, unsafe_allow_html=True)
+
+    # 7. 상세 카드 뷰 (참조사항 개행 지원 유지)
     if not filtered_df.empty:
         with st.expander("📌 대학별 상세 카드 뷰로 확인하기 (참조 내용 강조)"):
             for idx, row in filtered_df.head(25).iterrows():
                 ref_text = row["참조"]
 
-                # 참조 박스 HTML (들여쓰기 없는 단일 문자열로 구성하여 마크다운 코드블록 변환 방지)
                 if ref_text != "-":
                     ref_clean = ref_text.replace("\n", "<br>")
                     ref_part = f'<div style="margin-top: 10px; line-height: 1.6; color: #374151; background-color: #FFFBEB; padding: 10px 14px; border-radius: 6px; border: 1px solid #FDE68A;"><span class="badge-ref">참조</span> {ref_clean}</div>'
                 else:
                     ref_part = ""
 
-                # 전체 카드 HTML (각 줄 맨 앞 공백 0으로 생성)
                 card_html = (
                     f'<div class="result-card">'
                     f'<div style="margin-bottom: 8px;">'
