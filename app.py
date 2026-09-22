@@ -12,6 +12,11 @@ st.set_page_config(
 st.markdown(
     """
     <style>
+    /* 상단 메뉴, 깃허브 링크, 하단 배너 숨기기 */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
     * { font-family: 'Pretendard', sans-serif; }
     
