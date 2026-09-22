@@ -10,14 +10,30 @@ st.set_page_config(
     layout="wide",
 )
 
-# 2. 디자인 스타일 적용 (모바일 반응형 및 스타일링)
+# 2. 디자인 스타일 적용 (Streamlit 모든 마크/뱃지/헤더 완전 제거 & 모바일 최적화)
 st.markdown(
     """
     <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    /* ===================================================
+       [Streamlit 상단 바, 햄버거 메뉴, 로고 뱃지 완전 제거]
+       =================================================== */
+    #MainMenu {visibility: hidden; display: none !important;}
+    header {visibility: hidden; display: none !important;}
+    header[data-testid="stHeader"] {display: none !important;}
+    div[data-testid="stToolbar"] {display: none !important;}
+    div[data-testid="stDecoration"] {display: none !important;}
+    div[data-testid="stStatusWidget"] {display: none !important;}
+    div[data-testid="stAppDeployButton"] {display: none !important;}
+    footer {visibility: hidden; display: none !important;}
+    div[class*="viewerBadge"] {display: none !important;}
+    a[href*="streamlit.io"] {display: none !important;}
     
+    /* 상단 헤더 숨김 시 글자가 화면 맨 위에 붙지 않도록 안전 여백 확보 */
+    .block-container {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+    }
+
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
     * { font-family: 'Pretendard', sans-serif; }
     
@@ -258,7 +274,7 @@ else:
 
     st.markdown(f"**검색 결과: 총 `{len(filtered_df):,}`건**")
 
-    # 6. 표 출력 (헤더 가운데 정렬 반영)
+    # 6. 표 출력 (헤더 가운데 정렬 및 모바일 최적화 유지)
     if filtered_df.empty:
         st.warning("선택하신 조건에 일치하는 데이터가 없습니다.")
     else:
@@ -278,7 +294,6 @@ else:
                 f"</tr>"
             )
 
-        # <th> 태그에 text-align: center 적용
         table_html = (
             f'<div style="max-height: 650px; overflow-x: auto; overflow-y: auto; border: 1px solid #CBD5E1; border-radius: 8px; margin-bottom: 1.6rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); -webkit-overflow-scrolling: touch;">'
             f'<table class="custom-table" style="width: 100%; min-width: 580px; border-collapse: collapse; table-layout: fixed; text-align: left; font-size: 0.91rem; background-color: #FFFFFF;">'
