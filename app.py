@@ -10,7 +10,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# 2. 디자인 스타일 적용 (링크 밑줄 제거 및 고정 테이블 레이아웃)
+# 2. 디자인 스타일 적용 (모바일 반응형 최적화 및 스타일링)
 st.markdown(
     """
     <style>
@@ -32,7 +32,6 @@ st.markdown(
         color: #374151;
         margin-bottom: 1.2rem;
     }
-    /* 링크 밑줄 제거 및 깔끔한 블루 톤 유지 */
     .sub-title a {
         color: #2563EB;
         text-decoration: none;
@@ -259,7 +258,7 @@ else:
 
     st.markdown(f"**검색 결과: 총 `{len(filtered_df):,}`건**")
 
-    # 6. 표 출력 (고정 비율 table-layout: fixed 적용)
+    # 6. 표 출력 (모바일 최적화: 제목 간소화 및 가로 스크롤 안전 여백)
     if filtered_df.empty:
         st.warning("선택하신 조건에 일치하는 데이터가 없습니다.")
     else:
@@ -271,31 +270,32 @@ else:
 
             rows_html.append(
                 f'<tr style="border-bottom: 1px solid #E2E8F0;">'
-                f'<td style="padding: 12px 10px; font-weight: 700; vertical-align: top; color: #111827; word-break: keep-all;">{row["대학명"]}</td>'
-                f'<td style="padding: 12px 10px; font-weight: 600; color: #2563EB; vertical-align: top; line-height: 1.5; word-break: keep-all;">{row["모집단위(학과)"]}</td>'
-                f'<td style="padding: 12px 10px; vertical-align: top; line-height: 1.6; color: #1F2937; word-break: keep-all;">{core_cell}</td>'
-                f'<td style="padding: 12px 10px; vertical-align: top; line-height: 1.6; color: #1F2937; word-break: keep-all;">{recom_cell}</td>'
-                f'<td style="padding: 12px 10px; vertical-align: top; line-height: 1.6; color: #374151; font-size: 0.91rem; word-break: keep-all;">{ref_cell}</td>'
+                f'<td style="padding: 10px 8px; font-weight: 700; vertical-align: top; color: #111827; word-break: keep-all;">{row["대학명"]}</td>'
+                f'<td style="padding: 10px 8px; font-weight: 600; color: #2563EB; vertical-align: top; line-height: 1.5; word-break: keep-all;">{row["모집단위(학과)"]}</td>'
+                f'<td style="padding: 10px 8px; vertical-align: top; line-height: 1.6; color: #1F2937; word-break: keep-all;">{core_cell}</td>'
+                f'<td style="padding: 10px 8px; vertical-align: top; line-height: 1.6; color: #1F2937; word-break: keep-all;">{recom_cell}</td>'
+                f'<td style="padding: 10px 8px; vertical-align: top; line-height: 1.6; color: #374151; font-size: 0.9rem; word-break: keep-all;">{ref_cell}</td>'
                 f"</tr>"
             )
 
+        # min-width: 580px와 overflow-x: auto를 주어 스마트폰에서도 칸이 눌리지 않고 부드럽게 스크롤되도록 설정
         table_html = (
-            f'<div style="max-height: 650px; overflow-y: auto; border: 1px solid #CBD5E1; border-radius: 8px; margin-bottom: 1.6rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">'
-            f'<table class="custom-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; text-align: left; font-size: 0.93rem; background-color: #FFFFFF;">'
+            f'<div style="max-height: 650px; overflow-x: auto; overflow-y: auto; border: 1px solid #CBD5E1; border-radius: 8px; margin-bottom: 1.6rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); -webkit-overflow-scrolling: touch;">'
+            f'<table class="custom-table" style="width: 100%; min-width: 580px; border-collapse: collapse; table-layout: fixed; text-align: left; font-size: 0.91rem; background-color: #FFFFFF;">'
             f"<colgroup>"
-            f'<col style="width: 12%;">'  # 대학명
-            f'<col style="width: 20%;">'  # 모집단위(학과)
-            f'<col style="width: 26%;">'  # 핵심권장과목
-            f'<col style="width: 16%;">'  # 권장과목
-            f'<col style="width: 26%;">'  # 참조
+            f'<col style="width: 14%;">'  # 대학명
+            f'<col style="width: 22%;">'  # 모집단위
+            f'<col style="width: 25%;">'  # 핵심권장
+            f'<col style="width: 16%;">'  # 권장
+            f'<col style="width: 23%;">'  # 참조
             f"</colgroup>"
             f'<thead style="background-color: #F8FAFC; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #CBD5E1;">'
             f"<tr>"
-            f'<th style="padding: 12px 10px; color: #1E293B; font-weight: 700; white-space: nowrap;">대학명</th>'
-            f'<th style="padding: 12px 10px; color: #1E293B; font-weight: 700; white-space: nowrap;">모집단위(학과)</th>'
-            f'<th style="padding: 12px 10px; color: #1E293B; font-weight: 700; white-space: nowrap;">핵심권장과목</th>'
-            f'<th style="padding: 12px 10px; color: #1E293B; font-weight: 700; white-space: nowrap;">권장과목</th>'
-            f'<th style="padding: 12px 10px; color: #1E293B; font-weight: 700; white-space: nowrap;">참조</th>'
+            f'<th style="padding: 11px 8px; color: #1E293B; font-weight: 700; white-space: nowrap;">대학명</th>'
+            f'<th style="padding: 11px 8px; color: #1E293B; font-weight: 700; white-space: nowrap;">모집단위</th>'
+            f'<th style="padding: 11px 8px; color: #1E293B; font-weight: 700; white-space: nowrap;">핵심권장</th>'
+            f'<th style="padding: 11px 8px; color: #1E293B; font-weight: 700; white-space: nowrap;">권장</th>'
+            f'<th style="padding: 11px 8px; color: #1E293B; font-weight: 700; white-space: nowrap;">참조</th>'
             f"</tr>"
             f"</thead>"
             f"<tbody>"
@@ -306,7 +306,7 @@ else:
         )
         st.markdown(table_html, unsafe_allow_html=True)
 
-    # 7. 상세 카드 뷰
+    # 7. 상세 카드 뷰 (모바일에서 읽기 가장 편한 형태)
     if not filtered_df.empty:
         with st.expander("📌 대학별 상세 카드 뷰로 확인하기 (참조 내용 강조)"):
             for idx, row in filtered_df.head(25).iterrows():
