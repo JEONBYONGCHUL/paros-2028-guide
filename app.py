@@ -1,3 +1,4 @@
+import base64
 import glob
 import os
 import pandas as pd
@@ -10,13 +11,11 @@ st.set_page_config(
     layout="wide",
 )
 
-# 2. 디자인 스타일 적용 (Streamlit 모든 마크/뱃지/헤더 완전 제거 & 모바일 최적화)
+# 2. 첨단 연구소 디자인 스타일 적용 (새 로고 반응형 크기 최적화)
 st.markdown(
     """
     <style>
-    /* ===================================================
-       [Streamlit 상단 바, 햄버거 메뉴, 로고 뱃지 완전 제거]
-       =================================================== */
+    /* Streamlit 순정 UI/로고/뱃지 완전 숨김 */
     #MainMenu {visibility: hidden; display: none !important;}
     header {visibility: hidden; display: none !important;}
     header[data-testid="stHeader"] {display: none !important;}
@@ -27,103 +26,245 @@ st.markdown(
     footer {visibility: hidden; display: none !important;}
     div[class*="viewerBadge"] {display: none !important;}
     a[href*="streamlit.io"] {display: none !important;}
-    
-    /* 상단 헤더 숨김 시 글자가 화면 맨 위에 붙지 않도록 안전 여백 확보 */
+
+    /* 최적 여백 */
     .block-container {
-        padding-top: 2rem !important;
-        padding-bottom: 2rem !important;
+        padding-top: 1.5rem !important;
+        padding-bottom: 2.5rem !important;
+        max-width: 1200px;
     }
 
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-    * { font-family: 'Pretendard', sans-serif; }
-    
-    .main-title {
-        font-size: 2.1rem;
-        font-weight: 800;
-        color: #1E3A8A;
-        margin-bottom: 0.3rem;
+    * { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+
+    /* 상단 공식 브랜드 로고 스타일 (상하형 로고에 맞춘 최적 너비) */
+    .brand-logo-wrap {
+        margin-bottom: 0.8rem;
     }
+    .brand-logo-img {
+        max-width: 145px;
+        width: 100%;
+        height: auto;
+        border-radius: 6px;
+        display: block;
+        transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+    .brand-logo-img:hover {
+        transform: scale(1.03);
+        opacity: 0.92;
+    }
+
+    /* 메인 타이틀 & 메탈릭 테크 칩 */
+    .main-title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 0.35rem;
+    }
+    .main-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        background: linear-gradient(135deg, #0F172A 0%, #1E40AF 50%, #0284C7 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .tech-tag {
+        display: inline-block;
+        background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+        color: #1D4ED8;
+        font-size: 0.76rem;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 20px;
+        border: 1px solid #BFDBFE;
+        letter-spacing: 0.04em;
+        box-shadow: 0 1px 3px rgba(37,99,235,0.08);
+    }
+
+    /* 서브타이틀 & 캡슐형 링크 */
     .sub-title {
-        font-size: 1.05rem;
-        color: #374151;
-        margin-bottom: 1.2rem;
+        font-size: 0.98rem;
+        color: #475569;
+        margin-bottom: 1.3rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
     }
     .sub-title a {
         color: #2563EB;
         text-decoration: none;
         font-weight: 600;
+        background: #EFF6FF;
+        padding: 3px 10px;
+        border-radius: 6px;
+        border: 1px solid #DBEAFE;
+        transition: all 0.2s ease;
     }
     .sub-title a:hover {
         color: #1D4ED8;
+        background: #DBEAFE;
+        border-color: #93C5FD;
         text-decoration: none;
     }
+
+    /* 입체형 안내 가이드 박스 */
     .guide-box {
-        background-color: #F8FAFC;
-        border-left: 5px solid #2563EB;
-        padding: 1.1rem 1.3rem;
-        border-radius: 8px;
-        margin-bottom: 1.6rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        background: linear-gradient(135deg, #F8FAFC 0%, #F0F7FF 100%);
+        border: 1px solid #DBEAFE;
+        border-left: 4px solid #2563EB;
+        padding: 1.15rem 1.4rem;
+        border-radius: 12px;
+        margin-bottom: 1.8rem;
+        box-shadow: 0 4px 16px -2px rgba(37, 99, 235, 0.06);
         line-height: 1.8;
-        font-size: 0.96rem;
-        color: #1F2937;
+        font-size: 0.95rem;
+        color: #1E293B;
     }
-    .result-card {
+
+    /* 실시간 상태 표시 */
+    .live-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #059669;
+        background: #ECFDF5;
+        border: 1px solid #A7F3D0;
+        padding: 2px 8px;
+        border-radius: 20px;
+        width: fit-content;
+    }
+    .live-dot {
+        width: 7px;
+        height: 7px;
+        background-color: #10B981;
+        border-radius: 50%;
+        box-shadow: 0 0 6px #10B981;
+    }
+
+    /* 첨단 커맨드 다크 헤더 테이블 */
+    .custom-table-container {
+        max-height: 650px;
+        overflow-x: auto;
+        overflow-y: auto;
+        border: 1px solid #CBD5E1;
+        border-radius: 12px;
+        margin-bottom: 1.8rem;
+        box-shadow: 0 4px 20px -3px rgba(15, 23, 42, 0.08);
         background-color: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 10px;
-        padding: 1.2rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        -webkit-overflow-scrolling: touch;
     }
-    .badge-core {
-        background-color: #FEE2E2;
-        color: #B91C1C;
-        padding: 3px 8px;
-        border-radius: 5px;
+    .custom-table {
+        width: 100%;
+        min-width: 600px;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+        text-align: left;
+        font-size: 0.91rem;
+    }
+    .custom-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    .custom-table th {
+        background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
+        color: #F8FAFC;
         font-weight: 700;
-        font-size: 0.85rem;
+        white-space: nowrap;
+        text-align: center;
+        padding: 13px 10px;
+        font-size: 0.88rem;
+        letter-spacing: 0.02em;
+        border-bottom: 1px solid #334155;
+    }
+    .custom-table td {
+        padding: 12px 10px;
+        vertical-align: top;
+        border-bottom: 1px solid #F1F5F9;
+        word-break: keep-all;
+        transition: background 0.15s ease;
+    }
+    .custom-table tr:hover td {
+        background-color: #F8FAFC;
+    }
+
+    /* 플로팅 결과 카드 */
+    .result-card {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 1.3rem;
+        margin-bottom: 1.1rem;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .result-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px -4px rgba(37, 99, 235, 0.12);
+        border-color: #93C5FD;
+    }
+
+    .badge-core {
+        display: inline-block;
+        background: #FEF2F2;
+        color: #DC2626;
+        border: 1px solid #FECACA;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 0.82rem;
         margin-right: 6px;
     }
     .badge-recommend {
-        background-color: #DBEAFE;
-        color: #1D4ED8;
-        padding: 3px 8px;
-        border-radius: 5px;
+        display: inline-block;
+        background: #EFF6FF;
+        color: #2563EB;
+        border: 1px solid #BFDBFE;
+        padding: 2px 8px;
+        border-radius: 6px;
         font-weight: 700;
-        font-size: 0.85rem;
+        font-size: 0.82rem;
         margin-right: 6px;
     }
     .badge-ref {
-        background-color: #FEF3C7;
-        color: #92400E;
-        padding: 3px 8px;
-        border-radius: 5px;
+        display: inline-block;
+        background: #FFFBEB;
+        color: #B45309;
+        border: 1px solid #FDE68A;
+        padding: 2px 8px;
+        border-radius: 6px;
         font-weight: 700;
-        font-size: 0.85rem;
+        font-size: 0.82rem;
         margin-right: 6px;
     }
+
     .univ-tag {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: #111827;
+        font-size: 1.22rem;
+        font-weight: 800;
+        color: #0F172A;
+        letter-spacing: -0.02em;
     }
     .major-tag {
         font-size: 1.05rem;
-        font-weight: 600;
+        font-weight: 700;
         color: #2563EB;
         margin-left: 6px;
     }
-    .custom-table tr:hover {
-        background-color: #F8FAFC;
-    }
+
     .footer-text {
         text-align: center;
-        color: #9CA3AF;
-        font-size: 0.88rem;
-        margin-top: 3rem;
-        border-top: 1px solid #E5E7EB;
-        padding-top: 1.5rem;
+        color: #94A3B8;
+        font-size: 0.86rem;
+        margin-top: 3.5rem;
+        border-top: 1px solid #F1F5F9;
+        padding-top: 1.8rem;
+        letter-spacing: 0.02em;
     }
     </style>
 """,
@@ -131,7 +272,28 @@ st.markdown(
 )
 
 
-# 3. 엑셀 데이터 정밀 로드 함수
+# 3. 로고 이미지 자동 탐색 및 인코딩
+def get_logo_html():
+    img_candidates = (
+        glob.glob("*logo*.png")
+        + glob.glob("*파로스*.png")
+        + glob.glob("*.png")
+    )
+    for img_path in img_candidates:
+        if os.path.exists(img_path):
+            with open(img_path, "rb") as f:
+                encoded = base64.b64encode(f.read()).decode()
+            return f"""
+            <div class="brand-logo-wrap">
+                <a href="http://blog.naver.com/pharoslab" target="_blank" title="파로스 대입 랩 네이버 블로그 바로가기">
+                    <img src="data:image/png;base64,{encoded}" class="brand-logo-img" alt="파로스 대입 랩" />
+                </a>
+            </div>
+            """
+    return ""
+
+
+# 4. 엑셀 데이터 정밀 로드 함수
 @st.cache_data
 def load_data():
     xlsx_files = glob.glob("*.xlsx")
@@ -141,7 +303,6 @@ def load_data():
     filepath = xlsx_files[0]
     df_raw = pd.read_excel(filepath, header=None)
 
-    # 실제 데이터 시작 행 탐색 (5번째 행)
     start_row = 4
     for idx, row in df_raw.iloc[:10].iterrows():
         row_vals = [str(x).strip() for x in row.values]
@@ -171,7 +332,6 @@ def load_data():
             .replace({"nan": "", "None": ""})
         )
 
-    # 대학명 줄바꿈 정리
     df_data["대학명"] = (
         df_data["대학명"]
         .str.replace("\n", " ")
@@ -179,7 +339,6 @@ def load_data():
         .str.strip()
     )
 
-    # 학과 및 계열 표기 결합
     def format_dept(r):
         c_sub = r["세부학과"]
         c_main = r["계열_단과대"]
@@ -204,13 +363,22 @@ def load_data():
     ]
 
 
-# 4. 상단 타이틀 및 안내문
+# 5. 상단 헤더 영역 (신규 로고 + 타이틀 + 링크)
+logo_html = get_logo_html()
+if logo_html:
+    st.markdown(logo_html, unsafe_allow_html=True)
+
 st.markdown(
-    '<div class="main-title">🎓 2028 대학별 권장과목 조회</div>',
-    unsafe_allow_html=True,
-)
-st.markdown(
-    '<div class="sub-title">파로스대입랩 네이버블로그 <a href="http://blog.naver.com/pharoslab" target="_blank">http://blog.naver.com/pharoslab</a></div>',
+    """
+<div class="main-title-wrap">
+    <span class="main-title">🎓 2028 대학별 권장과목 조회</span>
+    <span class="tech-tag">DATA LAB</span>
+</div>
+<div class="sub-title">
+    <span>파로스대입랩 네이버블로그</span>
+    <a href="http://blog.naver.com/pharoslab" target="_blank">http://blog.naver.com/pharoslab</a>
+</div>
+""",
     unsafe_allow_html=True,
 )
 
@@ -231,7 +399,7 @@ if data is None:
         "❌ 엑셀 파일(.xlsx)을 찾을 수 없습니다. 저장소에 파일이 등록되어 있는지 확인해 주세요."
     )
 else:
-    # 5. 검색 및 필터 컨트롤
+    # 6. 검색 및 필터 컨트롤
     col1, col2, col3 = st.columns([1.5, 2, 2])
 
     with col1:
@@ -272,9 +440,22 @@ else:
             | filtered_df["권장과목"].str.contains(sub_q, case=False, na=False)
         ]
 
-    st.markdown(f"**검색 결과: 총 `{len(filtered_df):,}`건**")
+    # 실시간 데이터 상태 표시바
+    st.markdown(
+        f"""
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.6rem;">
+        <span style="font-size: 0.95rem; color: #334155; font-weight: 500;">
+            검색 결과: 총 <strong style="color: #2563EB; font-size: 1.05rem;">{len(filtered_df):,}</strong> 건
+        </span>
+        <div class="live-status">
+            <span class="live-dot"></span> LIVE DATA
+        </div>
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
 
-    # 6. 표 출력 (헤더 가운데 정렬 및 모바일 최적화 유지)
+    # 7. 다크 테크 헤더 표 출력
     if filtered_df.empty:
         st.warning("선택하신 조건에 일치하는 데이터가 없습니다.")
     else:
@@ -285,18 +466,18 @@ else:
             ref_cell = str(row["참조"]).replace("\n", "<br>")
 
             rows_html.append(
-                f'<tr style="border-bottom: 1px solid #E2E8F0;">'
-                f'<td style="padding: 10px 8px; font-weight: 700; vertical-align: top; color: #111827; word-break: keep-all;">{row["대학명"]}</td>'
-                f'<td style="padding: 10px 8px; font-weight: 600; color: #2563EB; vertical-align: top; line-height: 1.5; word-break: keep-all;">{row["모집단위(학과)"]}</td>'
-                f'<td style="padding: 10px 8px; vertical-align: top; line-height: 1.6; color: #1F2937; word-break: keep-all;">{core_cell}</td>'
-                f'<td style="padding: 10px 8px; vertical-align: top; line-height: 1.6; color: #1F2937; word-break: keep-all;">{recom_cell}</td>'
-                f'<td style="padding: 10px 8px; vertical-align: top; line-height: 1.6; color: #374151; font-size: 0.9rem; word-break: keep-all;">{ref_cell}</td>'
+                f"<tr>"
+                f'<td style="padding: 12px 10px; font-weight: 700; vertical-align: top; color: #0F172A; word-break: keep-all;">{row["대학명"]}</td>'
+                f'<td style="padding: 12px 10px; font-weight: 600; color: #2563EB; vertical-align: top; line-height: 1.5; word-break: keep-all;">{row["모집단위(학과)"]}</td>'
+                f'<td style="padding: 12px 10px; vertical-align: top; line-height: 1.6; color: #1E293B; word-break: keep-all;">{core_cell}</td>'
+                f'<td style="padding: 12px 10px; vertical-align: top; line-height: 1.6; color: #1E293B; word-break: keep-all;">{recom_cell}</td>'
+                f'<td style="padding: 12px 10px; vertical-align: top; line-height: 1.6; color: #475569; font-size: 0.9rem; word-break: keep-all;">{ref_cell}</td>'
                 f"</tr>"
             )
 
         table_html = (
-            f'<div style="max-height: 650px; overflow-x: auto; overflow-y: auto; border: 1px solid #CBD5E1; border-radius: 8px; margin-bottom: 1.6rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); -webkit-overflow-scrolling: touch;">'
-            f'<table class="custom-table" style="width: 100%; min-width: 580px; border-collapse: collapse; table-layout: fixed; text-align: left; font-size: 0.91rem; background-color: #FFFFFF;">'
+            f'<div class="custom-table-container">'
+            f'<table class="custom-table">'
             f"<colgroup>"
             f'<col style="width: 14%;">'  # 대학명
             f'<col style="width: 22%;">'  # 모집단위
@@ -304,13 +485,13 @@ else:
             f'<col style="width: 16%;">'  # 권장
             f'<col style="width: 23%;">'  # 참조
             f"</colgroup>"
-            f'<thead style="background-color: #F8FAFC; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #CBD5E1;">'
+            f"<thead>"
             f"<tr>"
-            f'<th style="padding: 11px 8px; color: #1E293B; font-weight: 700; white-space: nowrap; text-align: center;">대학명</th>'
-            f'<th style="padding: 11px 8px; color: #1E293B; font-weight: 700; white-space: nowrap; text-align: center;">모집단위</th>'
-            f'<th style="padding: 11px 8px; color: #1E293B; font-weight: 700; white-space: nowrap; text-align: center;">핵심권장</th>'
-            f'<th style="padding: 11px 8px; color: #1E293B; font-weight: 700; white-space: nowrap; text-align: center;">권장</th>'
-            f'<th style="padding: 11px 8px; color: #1E293B; font-weight: 700; white-space: nowrap; text-align: center;">참조</th>'
+            f"<th>대학명</th>"
+            f"<th>모집단위</th>"
+            f"<th>핵심권장</th>"
+            f"<th>권장</th>"
+            f"<th>참조</th>"
             f"</tr>"
             f"</thead>"
             f"<tbody>"
@@ -321,7 +502,7 @@ else:
         )
         st.markdown(table_html, unsafe_allow_html=True)
 
-    # 7. 상세 카드 뷰
+    # 8. 상세 카드 뷰
     if not filtered_df.empty:
         with st.expander("📌 대학별 상세 카드 뷰로 확인하기 (참조 내용 강조)"):
             for idx, row in filtered_df.head(25).iterrows():
@@ -329,7 +510,7 @@ else:
 
                 if ref_text != "-":
                     ref_clean = ref_text.replace("\n", "<br>")
-                    ref_part = f'<div style="margin-top: 10px; line-height: 1.6; color: #374151; background-color: #FFFBEB; padding: 10px 14px; border-radius: 6px; border: 1px solid #FDE68A;"><span class="badge-ref">참조</span> {ref_clean}</div>'
+                    ref_part = f'<div style="margin-top: 10px; line-height: 1.6; color: #374151; background-color: #FFFBEB; padding: 10px 14px; border-radius: 8px; border: 1px solid #FDE68A;"><span class="badge-ref">참조</span> {ref_clean}</div>'
                 else:
                     ref_part = ""
 
@@ -338,11 +519,11 @@ else:
                     f'<div style="margin-bottom: 8px;">'
                     f'<span class="univ-tag">{row["대학명"]}</span>'
                     f'<span class="major-tag">| {row["모집단위(학과)"]}</span>'
-                    f'<span style="color: #6B7280; font-size: 0.85rem; margin-left: 8px;">({row["지역"]})</span>'
+                    f'<span style="color: #64748B; font-size: 0.85rem; margin-left: 8px;">({row["지역"]})</span>'
                     f"</div>"
                     f'<div style="line-height: 1.8; margin-top: 6px;">'
-                    f'<span class="badge-core">핵심 권장</span> <span style="font-weight: 500;">{row["핵심권장과목"]}</span><br>'
-                    f'<span class="badge-recommend">일반 권장</span> <span style="font-weight: 500;">{row["권장과목"]}</span>'
+                    f'<span class="badge-core">핵심 권장</span> <span style="font-weight: 500; color: #1E293B;">{row["핵심권장과목"]}</span><br>'
+                    f'<span class="badge-recommend">일반 권장</span> <span style="font-weight: 500; color: #1E293B;">{row["권장과목"]}</span>'
                     f"</div>"
                     f"{ref_part}"
                     f"</div>"
@@ -355,11 +536,11 @@ else:
                     "상세 카드 뷰는 상위 25건까지만 표시됩니다. 전체 목록은 상단 표에서 확인하실 수 있습니다."
                 )
 
-    # 8. 하단 브랜딩 푸터
+    # 9. 하단 브랜딩 푸터
     st.markdown(
         """
         <div class="footer-text">
-            © 파로스대입랩 | 2028 대입 전공 연계 권장과목 연구 자료
+            © 파로스대입랩 (PHAROS LAB) | 2028 대입 전공 연계 권장과목 연구 자료
         </div>
     """,
         unsafe_allow_html=True,
