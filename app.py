@@ -6,12 +6,12 @@ import streamlit as st
 
 # 1. 페이지 기본 설정
 st.set_page_config(
-    page_title="2028 대학별 권장과목 조회 | 파로스대입랩",
+    page_title="2028 대학별 권장 과목 조회 | 파로스대입랩",
     page_icon="🎓",
     layout="wide",
 )
 
-# 2. 첨단 연구소 디자인 스타일 적용 (새 로고 반응형 크기 최적화)
+# 2. 첨단 연구소 디자인 스타일 적용 (가운데 정렬 및 미니 로고)
 st.markdown(
     """
     <style>
@@ -29,7 +29,7 @@ st.markdown(
 
     /* 최적 여백 */
     .block-container {
-        padding-top: 1.5rem !important;
+        padding-top: 1.8rem !important;
         padding-bottom: 2.5rem !important;
         max-width: 1200px;
     }
@@ -37,30 +37,15 @@ st.markdown(
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
     * { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
 
-    /* 상단 공식 브랜드 로고 스타일 (상하형 로고에 맞춘 최적 너비) */
-    .brand-logo-wrap {
-        margin-bottom: 0.8rem;
-    }
-    .brand-logo-img {
-        max-width: 145px;
-        width: 100%;
-        height: auto;
-        border-radius: 6px;
-        display: block;
-        transition: transform 0.2s ease, opacity 0.2s ease;
-    }
-    .brand-logo-img:hover {
-        transform: scale(1.03);
-        opacity: 0.92;
-    }
-
-    /* 메인 타이틀 & 메탈릭 테크 칩 */
+    /* 메인 타이틀 중앙 정렬 & 메탈릭 테크 칩 */
     .main-title-wrap {
         display: flex;
+        justify-content: center;
         align-items: center;
         gap: 10px;
         flex-wrap: wrap;
-        margin-bottom: 0.35rem;
+        margin-bottom: 0.4rem;
+        text-align: center;
     }
     .main-title {
         font-size: 2.2rem;
@@ -83,15 +68,24 @@ st.markdown(
         box-shadow: 0 1px 3px rgba(37,99,235,0.08);
     }
 
-    /* 서브타이틀 & 캡슐형 링크 */
+    /* 서브타이틀 중앙 정렬 & 미니 로고 아이콘 */
     .sub-title {
         font-size: 0.98rem;
         color: #475569;
-        margin-bottom: 1.3rem;
+        margin-bottom: 1.5rem;
         display: flex;
+        justify-content: center;
         align-items: center;
         gap: 8px;
         flex-wrap: wrap;
+        text-align: center;
+    }
+    .mini-logo-img {
+        height: 24px;
+        width: auto;
+        vertical-align: middle;
+        display: inline-block;
+        margin-right: 2px;
     }
     .sub-title a {
         color: #2563EB;
@@ -110,7 +104,7 @@ st.markdown(
         text-decoration: none;
     }
 
-    /* 입체형 안내 가이드 박스 */
+    /* 안내 가이드 박스 */
     .guide-box {
         background: linear-gradient(135deg, #F8FAFC 0%, #F0F7FF 100%);
         border: 1px solid #DBEAFE;
@@ -272,24 +266,14 @@ st.markdown(
 )
 
 
-# 3. 로고 이미지 자동 탐색 및 인코딩
-def get_logo_html():
-    img_candidates = (
-        glob.glob("*logo*.png")
-        + glob.glob("*파로스*.png")
-        + glob.glob("*.png")
-    )
+# 3. 미니 로고 아이콘 탐색 및 HTML 생성
+def get_mini_logo_html():
+    img_candidates = glob.glob("*logo*.png") + glob.glob("*.png")
     for img_path in img_candidates:
         if os.path.exists(img_path):
             with open(img_path, "rb") as f:
                 encoded = base64.b64encode(f.read()).decode()
-            return f"""
-            <div class="brand-logo-wrap">
-                <a href="http://blog.naver.com/pharoslab" target="_blank" title="파로스 대입 랩 네이버 블로그 바로가기">
-                    <img src="data:image/png;base64,{encoded}" class="brand-logo-img" alt="파로스 대입 랩" />
-                </a>
-            </div>
-            """
+            return f'<img src="data:image/png;base64,{encoded}" class="mini-logo-img" alt="파로스대입랩" />'
     return ""
 
 
@@ -363,18 +347,17 @@ def load_data():
     ]
 
 
-# 5. 상단 헤더 영역 (신규 로고 + 타이틀 + 링크)
-logo_html = get_logo_html()
-if logo_html:
-    st.markdown(logo_html, unsafe_allow_html=True)
+# 5. 상단 헤더 영역 (가운데 정렬 타이틀 + 미니 로고 라인)
+mini_logo = get_mini_logo_html()
 
 st.markdown(
-    """
+    f"""
 <div class="main-title-wrap">
-    <span class="main-title">🎓 2028 대학별 권장과목 조회</span>
+    <span class="main-title">2028 대학별 권장 과목 조회</span>
     <span class="tech-tag">DATA LAB</span>
 </div>
 <div class="sub-title">
+    {mini_logo}
     <span>파로스대입랩 네이버블로그</span>
     <a href="http://blog.naver.com/pharoslab" target="_blank">http://blog.naver.com/pharoslab</a>
 </div>
