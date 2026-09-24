@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# 2. 하단 광고 및 Streamlit 뱃지 원천 차단 스크립트 (부모 창/모바일 완벽 대응)
+# 2. 하단 광고 및 Streamlit 뱃지 원천 차단 스크립트
 components.html(
     """
     <script>
@@ -79,7 +79,7 @@ components.html(
     width=0,
 )
 
-# 3. 디자인 스타일 적용 (모바일 반응형 타이틀 자동 폰트 조절 & 단어 쪼개짐 방지)
+# 3. 디자인 스타일 적용 (타이틀과 블로그 사이 한 줄 띄움 여백 반영)
 st.markdown(
     """
     <style>
@@ -118,12 +118,12 @@ st.markdown(
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
     * { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
 
-    /* 메인 타이틀: 반응형 폰트(clamp) 및 한국어 단어 쪼개짐 방지(word-break: keep-all) */
+    /* 메인 타이틀: 반응형 폰트 크기 및 하단 한 줄 여백(1.2rem) 설정 */
     .main-title-wrap {
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-bottom: 0.45rem;
+        margin-bottom: 1.2rem; /* 타이틀과 블로그 사이 한 줄 띄움 */
         text-align: center;
         width: 100%;
     }
@@ -181,6 +181,9 @@ st.markdown(
             padding-left: 0.8rem !important;
             padding-right: 0.8rem !important;
             padding-top: 1.2rem !important;
+        }
+        .main-title-wrap {
+            margin-bottom: 0.9rem; /* 모바일에서도 적절한 한 줄 띄움 */
         }
         .main-title {
             font-size: 1.4rem !important;
@@ -435,7 +438,7 @@ def load_data(filepath, file_mtime):
     ]
 
 
-# 6. 상단 헤더 영역 (순수 타이틀 반응형 중앙 정렬)
+# 6. 상단 헤더 영역 (타이틀과 블로그 사이 한 줄 띄움 반영)
 mini_logo = get_mini_logo_html()
 
 st.markdown(
