@@ -3,7 +3,6 @@ import glob
 import os
 import pandas as pd
 import streamlit as st
-import streamlit.components.v1 as components
 
 # 1. 페이지 기본 설정
 st.set_page_config(
@@ -12,51 +11,35 @@ st.set_page_config(
     layout="wide",
 )
 
-# 2. 가장 강력한 뱃지 차단 CSS (z-index 및 강제 투명도 적용)
+# 2. 안전하고 강력한 CSS 숨김 처리 (백지화 원인 JS 제거)
 st.markdown(
     """
     <style>
-    /* Streamlit 순정 UI/로고/뱃지/저장소 링크 완전 숨김 */
+    /* Streamlit 기본 UI 완벽 숨김 */
     #MainMenu {visibility: hidden !important; display: none !important;}
     header {visibility: hidden !important; display: none !important;}
-    header[data-testid="stHeader"] {display: none !important;}
-    div[data-testid="stToolbar"] {display: none !important;}
-    div[data-testid="stDecoration"] {display: none !important;}
-    div[data-testid="stStatusWidget"] {display: none !important;}
+    footer {visibility: hidden !important; display: none !important;}
+    [data-testid="stToolbar"] {display: none !important;}
+    [data-testid="stDecoration"] {display: none !important;}
+    [data-testid="stStatusWidget"] {display: none !important;}
     
-    /* 화면 하단에 플로팅되는 배포/제작자 뱃지 원천 차단 */
-    div[data-testid="stAppDeployButton"], 
-    div[data-testid="manage-app-button"],
-    #manage-app-button,
+    /* 우측 하단 / 좌측 하단 플로팅 뱃지 정밀 타격 (앱 전체가 숨겨지지 않도록 안전하게) */
+    [data-testid="manage-app-button"],
+    [data-testid="stAppDeployButton"],
+    .viewerBadge_container__1QSob,
+    .styles_viewerBadge__1yB5_,
     [class*="viewerBadge"],
-    [class*="ViewerBadge"],
-    [class*="styles_viewerBadge"],
     [class*="stDeployButton"] {
         display: none !important; 
         visibility: hidden !important; 
         opacity: 0 !important;
         pointer-events: none !important;
-        height: 0px !important;
-        width: 0px !important;
-        position: absolute !important;
         z-index: -9999 !important;
     }
 
-    footer, [data-testid="stFooter"] {
-        visibility: hidden !important; 
+    /* Streamlit 링크 뱃지 원천 차단 */
+    a[href*="streamlit.io"] {
         display: none !important;
-    }
-
-    a[href*="streamlit.io"], a[href*="share.streamlit.io"], a[href*="github.com"] {
-        display: none !important;
-    }
-
-    iframe[title="streamlit.components.v1.html"] {
-        position: absolute !important;
-        height: 0px !important;
-        width: 0px !important;
-        border: none !important;
-        visibility: hidden !important;
     }
 
     .block-container {
@@ -101,201 +84,41 @@ st.markdown(
         flex-wrap: wrap;
         text-align: center;
     }
-    .mini-logo-img {
-        height: 24px;
-        width: auto;
-        vertical-align: middle;
-        display: inline-block;
-        margin-right: 2px;
-    }
-    .sub-title a {
-        color: #2563EB;
-        text-decoration: none;
-        font-weight: 600;
-        background: #EFF6FF;
-        padding: 3px 10px;
-        border-radius: 6px;
-        border: 1px solid #DBEAFE;
-        transition: all 0.2s ease;
-    }
-
+    .mini-logo-img { height: 24px; width: auto; vertical-align: middle; display: inline-block; margin-right: 2px; }
+    .sub-title a { color: #2563EB; text-decoration: none; font-weight: 600; background: #EFF6FF; padding: 3px 10px; border-radius: 6px; border: 1px solid #DBEAFE; transition: all 0.2s ease; }
+    
     /* 모바일 환경 최적화 */
     @media (max-width: 640px) {
-        .block-container {
-            padding-left: 0.8rem !important;
-            padding-right: 0.8rem !important;
-            padding-top: 1.2rem !important;
-        }
-        .main-title-wrap {
-            margin-bottom: 0.9rem;
-        }
-        .main-title {
-            font-size: 1.4rem !important;
-            white-space: nowrap !important;
-        }
-        .sub-title {
-            font-size: 0.88rem !important;
-            gap: 6px !important;
-        }
-        .guide-box {
-            padding: 0.9rem 1rem !important;
-            font-size: 0.88rem !important;
-            line-height: 1.7 !important;
-        }
+        .block-container { padding-left: 0.8rem !important; padding-right: 0.8rem !important; padding-top: 1.2rem !important; }
+        .main-title-wrap { margin-bottom: 0.9rem; }
+        .main-title { font-size: 1.4rem !important; white-space: nowrap !important; }
+        .sub-title { font-size: 0.88rem !important; gap: 6px !important; }
+        .guide-box { padding: 0.9rem 1rem !important; font-size: 0.88rem !important; line-height: 1.7 !important; }
     }
 
-    /* 안내 가이드 박스 */
-    .guide-box {
-        background: linear-gradient(135deg, #F8FAFC 0%, #F0F7FF 100%);
-        border: 1px solid #DBEAFE;
-        border-left: 4px solid #2563EB;
-        padding: 1.15rem 1.4rem;
-        border-radius: 12px;
-        margin-bottom: 1.8rem;
-        box-shadow: 0 4px 16px -2px rgba(37, 99, 235, 0.06);
-        line-height: 1.8;
-        font-size: 0.95rem;
-        color: #1E293B;
-    }
-
-    /* 실시간 상태 표시 */
-    .live-status {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: #059669;
-        background: #ECFDF5;
-        border: 1px solid #A7F3D0;
-        padding: 2px 8px;
-        border-radius: 20px;
-        width: fit-content;
-    }
-    .live-dot {
-        width: 7px;
-        height: 7px;
-        background-color: #10B981;
-        border-radius: 50%;
-        box-shadow: 0 0 6px #10B981;
-    }
-
-    /* 첨단 커맨드 다크 헤더 테이블 */
-    .custom-table-container {
-        max-height: 650px;
-        overflow-x: auto;
-        overflow-y: auto;
-        border: 1px solid #CBD5E1;
-        border-radius: 12px;
-        margin-bottom: 1.8rem;
-        box-shadow: 0 4px 20px -3px rgba(15, 23, 42, 0.08);
-        background-color: #FFFFFF;
-        -webkit-overflow-scrolling: touch;
-    }
-    .custom-table {
-        width: 100%;
-        min-width: 600px;
-        border-collapse: separate;
-        border-spacing: 0;
-        table-layout: fixed;
-        text-align: left;
-        font-size: 0.91rem;
-    }
-    .custom-table thead {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-    }
-    .custom-table th {
-        background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
-        color: #F8FAFC;
-        font-weight: 700;
-        white-space: nowrap;
-        text-align: center;
-        padding: 13px 10px;
-        font-size: 0.88rem;
-        border-bottom: 1px solid #334155;
-    }
-    .custom-table td {
-        padding: 12px 10px;
-        vertical-align: top;
-        border-bottom: 1px solid #F1F5F9;
-        word-break: keep-all;
-    }
-
-    /* 플로팅 결과 카드 */
-    .result-card {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 12px;
-        padding: 1.3rem;
-        margin-bottom: 1.1rem;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-    }
+    .guide-box { background: linear-gradient(135deg, #F8FAFC 0%, #F0F7FF 100%); border: 1px solid #DBEAFE; border-left: 4px solid #2563EB; padding: 1.15rem 1.4rem; border-radius: 12px; margin-bottom: 1.8rem; box-shadow: 0 4px 16px -2px rgba(37, 99, 235, 0.06); line-height: 1.8; font-size: 0.95rem; color: #1E293B; }
+    .live-status { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; font-weight: 600; color: #059669; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 2px 8px; border-radius: 20px; width: fit-content; }
+    .live-dot { width: 7px; height: 7px; background-color: #10B981; border-radius: 50%; box-shadow: 0 0 6px #10B981; }
+    
+    .custom-table-container { max-height: 650px; overflow-x: auto; overflow-y: auto; border: 1px solid #CBD5E1; border-radius: 12px; margin-bottom: 1.8rem; box-shadow: 0 4px 20px -3px rgba(15, 23, 42, 0.08); background-color: #FFFFFF; -webkit-overflow-scrolling: touch; }
+    .custom-table { width: 100%; min-width: 600px; border-collapse: separate; border-spacing: 0; table-layout: fixed; text-align: left; font-size: 0.91rem; }
+    .custom-table thead { position: sticky; top: 0; z-index: 10; }
+    .custom-table th { background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%); color: #F8FAFC; font-weight: 700; white-space: nowrap; text-align: center; padding: 13px 10px; font-size: 0.88rem; border-bottom: 1px solid #334155; }
+    .custom-table td { padding: 12px 10px; vertical-align: top; border-bottom: 1px solid #F1F5F9; word-break: keep-all; }
+    
+    .result-card { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 1.3rem; margin-bottom: 1.1rem; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04); }
     .badge-core { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.82rem; margin-right: 6px; }
     .badge-recommend { background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.82rem; margin-right: 6px; }
     .badge-ref { background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.82rem; margin-right: 6px; }
-
     .univ-tag { font-size: 1.22rem; font-weight: 800; color: #0F172A; }
     .major-tag { font-size: 1.05rem; font-weight: 700; color: #2563EB; margin-left: 6px; }
-
-    .footer-text {
-        text-align: center; color: #94A3B8; font-size: 0.86rem; margin-top: 3.5rem;
-        border-top: 1px solid #F1F5F9; padding-top: 1.8rem;
-    }
+    .footer-text { text-align: center; color: #94A3B8; font-size: 0.86rem; margin-top: 3.5rem; border-top: 1px solid #F1F5F9; padding-top: 1.8rem; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# 3. Created by 텍스트 추적 및 파괴 JS (0.05초 단위 실행)
-components.html(
-    """
-    <script>
-    function nukeStreamlitBadges() {
-        const docs = [document];
-        try { if (window.parent && window.parent.document) docs.push(window.parent.document); } catch(e) {}
-        try { if (window.top && window.top.document) docs.push(window.top.document); } catch(e) {}
-
-        docs.forEach(doc => {
-            // 1단계: 지정된 CSS 클래스 및 ID 타겟 파괴
-            const selectors = [
-                '[data-testid="stAppDeployButton"]', '[data-testid="manage-app-button"]', 
-                '#manage-app-button', '[class*="viewerBadge"]', '[class*="stDeployButton"]'
-            ];
-            selectors.forEach(sel => {
-                try {
-                    doc.querySelectorAll(sel).forEach(el => {
-                        el.style.setProperty("display", "none", "important");
-                        el.style.setProperty("opacity", "0", "important");
-                    });
-                } catch(err) {}
-            });
-
-            // 2단계: 텍스트 기반 내용(Created by) 추적 파괴
-            try {
-                doc.querySelectorAll('div, span, a, button').forEach(el => {
-                    const txt = el.textContent || '';
-                    if (txt.includes('Created by') || txt.includes('Hosted with') || txt.includes('Manage app')) {
-                        el.style.setProperty("display", "none", "important");
-                        el.style.setProperty("visibility", "hidden", "important");
-                    }
-                });
-            } catch(err) {}
-        });
-    }
-
-    nukeStreamlitBadges();
-    document.addEventListener("DOMContentLoaded", nukeStreamlitBadges);
-    // 0.05초마다 검사하여 지연 로딩되는 뱃지까지 원천 삭제
-    setInterval(nukeStreamlitBadges, 50); 
-    </script>
-    """,
-    height=0,
-    width=0,
-)
-
-# 4. 미니 등대 로고 아이콘 탐색
+# 3. 미니 등대 로고 아이콘 탐색
 def get_mini_logo_html():
     img_candidates = glob.glob("*logo*.png") + glob.glob("*.png")
     for img_path in img_candidates:
@@ -305,8 +128,7 @@ def get_mini_logo_html():
             return f'<img src="data:image/png;base64,{encoded}" class="mini-logo-img" alt="파로스대입랩" />'
     return ""
 
-
-# 5. 엑셀 데이터 로드 함수
+# 4. 엑셀 데이터 로드 함수
 @st.cache_data
 def load_data(filepath, file_mtime):
     df_raw = pd.read_excel(filepath, header=None, engine='openpyxl')
@@ -344,8 +166,7 @@ def load_data(filepath, file_mtime):
     df_data = df_data[df_data["대학명"] != ""]
     return df_data[["지역", "대학명", "모집단위(학과)", "핵심권장과목", "권장과목", "참조"]]
 
-
-# 6. 상단 헤더 영역
+# 5. 상단 헤더 영역
 mini_logo = get_mini_logo_html()
 
 st.markdown(
@@ -372,10 +193,10 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 엑셀 파일 로드 및 자동 갱신
+# 엑셀 파일 로드
 xlsx_files = glob.glob("*.xlsx")
 if not xlsx_files:
-    st.error("❌ 엑셀 파일(.xlsx)을 찾을 수 없습니다. 저장소에 파일이 등록되어 있는지 확인해 주세요.")
+    st.error("❌ 엑셀 파일(.xlsx)을 찾을 수 없습니다.")
     data = None
 else:
     target_file = xlsx_files[0]
@@ -383,28 +204,21 @@ else:
     data = load_data(target_file, file_mtime)
 
 if data is not None:
-    # 7. 검색 및 필터 컨트롤
+    # 검색 및 필터
     col1, col2, col3 = st.columns([1.5, 2, 2])
-
     with col1:
         univ_list = ["전체"] + sorted([u for u in data["대학명"].unique() if u != "-"])
         selected_univ = st.selectbox("🏫 대학 선택", univ_list)
-
     with col2:
-        search_dept = st.text_input("🔍 모집단위(학과) 검색", placeholder="예: 컴퓨터, 경영, 의예, 간호, 데이터, 전모집단위")
-
+        search_dept = st.text_input("🔍 모집단위(학과) 검색", placeholder="예: 컴퓨터, 경영, 의예, 전모집단위")
     with col3:
-        search_subject = st.text_input("📚 권장과목 검색", placeholder="예: 미적분, 물리학, 화학, 기하")
+        search_subject = st.text_input("📚 권장과목 검색", placeholder="예: 미적분, 물리학, 화학")
 
-    # 필터링 로직
     filtered_df = data.copy()
-
     if selected_univ != "전체":
         filtered_df = filtered_df[filtered_df["대학명"] == selected_univ]
-
     if search_dept.strip():
         filtered_df = filtered_df[filtered_df["모집단위(학과)"].str.contains(search_dept.strip(), case=False, na=False)]
-
     if search_subject.strip():
         sub_q = search_subject.strip()
         filtered_df = filtered_df[
@@ -412,22 +226,18 @@ if data is not None:
             filtered_df["권장과목"].str.contains(sub_q, case=False, na=False)
         ]
 
-    # 실시간 데이터 상태 표시바
     st.markdown(
         f"""
     <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.6rem;">
         <span style="font-size: 0.95rem; color: #334155; font-weight: 500;">
             검색 결과: 총 <strong style="color: #2563EB; font-size: 1.05rem;">{len(filtered_df):,}</strong> 건
         </span>
-        <div class="live-status">
-            <span class="live-dot"></span> LIVE DATA
-        </div>
+        <div class="live-status"><span class="live-dot"></span> LIVE DATA</div>
     </div>
     """,
         unsafe_allow_html=True,
     )
 
-    # 8. 다크 테크 헤더 표 출력
     if filtered_df.empty:
         st.warning("선택하신 조건에 일치하는 데이터가 없습니다.")
     else:
@@ -439,27 +249,23 @@ if data is not None:
 
             rows_html.append(
                 f"<tr>"
-                f'<td style="padding: 12px 10px; font-weight: 700; vertical-align: top; color: #0F172A; word-break: keep-all;">{row["대학명"]}</td>'
-                f'<td style="padding: 12px 10px; font-weight: 600; color: #2563EB; vertical-align: top; line-height: 1.5; word-break: keep-all;">{row["모집단위(학과)"]}</td>'
-                f'<td style="padding: 12px 10px; vertical-align: top; line-height: 1.6; color: #1E293B; word-break: keep-all;">{core_cell}</td>'
-                f'<td style="padding: 12px 10px; vertical-align: top; line-height: 1.6; color: #1E293B; word-break: keep-all;">{recom_cell}</td>'
-                f'<td style="padding: 12px 10px; vertical-align: top; line-height: 1.6; color: #475569; font-size: 0.9rem; word-break: keep-all;">{ref_cell}</td>'
+                f'<td style="padding: 12px 10px; font-weight: 700; color: #0F172A;">{row["대학명"]}</td>'
+                f'<td style="padding: 12px 10px; font-weight: 600; color: #2563EB;">{row["모집단위(학과)"]}</td>'
+                f'<td style="padding: 12px 10px; color: #1E293B;">{core_cell}</td>'
+                f'<td style="padding: 12px 10px; color: #1E293B;">{recom_cell}</td>'
+                f'<td style="padding: 12px 10px; color: #475569; font-size: 0.9rem;">{ref_cell}</td>'
                 f"</tr>"
             )
 
         table_html = (
-            f'<div class="custom-table-container">'
-            f'<table class="custom-table">'
-            f"<colgroup>"
-            f'<col style="width: 14%;"><col style="width: 22%;"><col style="width: 25%;"><col style="width: 16%;"><col style="width: 23%;">'
-            f"</colgroup>"
+            f'<div class="custom-table-container"><table class="custom-table">'
+            f"<colgroup><col style='width: 14%;'><col style='width: 22%;'><col style='width: 25%;'><col style='width: 16%;'><col style='width: 23%;'></colgroup>"
             f"<thead><tr><th>대학명</th><th>모집단위</th><th>핵심권장</th><th>권장</th><th>참조</th></tr></thead>"
             f"<tbody>{''.join(rows_html)}</tbody>"
             f"</table></div>"
         )
         st.markdown(table_html, unsafe_allow_html=True)
 
-    # 9. 상세 카드 뷰
     if not filtered_df.empty:
         with st.expander("📌 대학별 상세 카드 뷰로 확인하기 (참조 내용 강조)"):
             for idx, row in filtered_df.head(25).iterrows():
@@ -477,7 +283,6 @@ if data is not None:
             if len(filtered_df) > 25:
                 st.caption("상세 카드 뷰는 상위 25건까지만 표시됩니다. 전체 목록은 상단 표에서 확인하실 수 있습니다.")
 
-    # 10. 하단 브랜딩 푸터
     st.markdown(
         """
         <div class="footer-text">
