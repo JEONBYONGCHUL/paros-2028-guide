@@ -68,7 +68,7 @@ st.markdown(
         -webkit-text-fill-color: transparent;
     }
 
-    /* 서브타이틀 */
+    /* 서브타이틀 (네이버프리미엄콘텐츠 반영) */
     .sub-title {
         font-size: 0.98rem;
         color: #475569;
@@ -200,7 +200,7 @@ def load_data(filepath, file_mtime):
     df_data = df_data[df_data["대학명"] != ""]
     return df_data[["지역", "대학명", "모집단위(학과)", "핵심권장과목", "권장과목", "참조"]]
 
-# 6. 상단 헤더 영역
+# 6. 상단 헤더 영역 (네이버프리미엄콘텐츠 반영)
 mini_logo = get_mini_logo_html()
 
 st.markdown(
@@ -210,8 +210,8 @@ st.markdown(
 </div>
 <div class="sub-title">
     {mini_logo}
-    <span>파로스대입랩 네이버블로그</span>
-    <a href="http://blog.naver.com/pharoslab" target="_blank">http://blog.naver.com/pharoslab</a>
+    <span>네이버프리미엄콘텐츠 파로스대입랩</span>
+    <a href="https://contents.premium.naver.com/pharoslab/jinhak" target="_blank">https://contents.premium.naver.com/pharoslab/jinhak</a>
 </div>
 """,
     unsafe_allow_html=True,
