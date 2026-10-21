@@ -3,6 +3,7 @@ import glob
 import os
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 # 1. 페이지 기본 설정
 st.set_page_config(
@@ -11,7 +12,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# 2. 안전하고 강력한 CSS 숨김 처리 (백지화 원인 JS 제거)
+# 2. 안전하고 강력한 CSS 숨김 처리
 st.markdown(
     """
     <style>
@@ -23,7 +24,7 @@ st.markdown(
     [data-testid="stDecoration"] {display: none !important;}
     [data-testid="stStatusWidget"] {display: none !important;}
     
-    /* 우측 하단 / 좌측 하단 플로팅 뱃지 정밀 타격 (앱 전체가 숨겨지지 않도록 안전하게) */
+    /* 우측/좌측 하단 뱃지 기본 차단 */
     [data-testid="manage-app-button"],
     [data-testid="stAppDeployButton"],
     .viewerBadge_container__1QSob,
@@ -35,11 +36,6 @@ st.markdown(
         opacity: 0 !important;
         pointer-events: none !important;
         z-index: -9999 !important;
-    }
-
-    /* Streamlit 링크 뱃지 원천 차단 */
-    a[href*="streamlit.io"] {
-        display: none !important;
     }
 
     .block-container {
@@ -118,7 +114,45 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 3. 미니 등대 로고 아이콘 탐색
+# 3. 백지화 오류 없는 정밀 타격 뱃지 차단 자바스크립트
+components.html(
+    """
+    <script>
+    function stealthKillBadges() {
+        try {
+            const docs = [document];
+            if (window.parent) docs.push(window.parent.document);
+            if (window.top) docs.push(window.top.document);
+            
+            docs.forEach(doc => {
+                // Streamlit 특유의 뱃지 클래스 및 속성만 핀포인트로 찾아 투명화
+                const targets = doc.querySelectorAll('[class*="viewerBadge"], [class*="ViewerBadge"], [data-testid="stAppDeployButton"], [data-testid="manage-app-button"], a[href*="streamlit.io"]');
+                targets.forEach(el => {
+                    el.style.setProperty("display", "none", "important");
+                    el.style.setProperty("opacity", "0", "important");
+                    el.style.setProperty("pointer-events", "none", "important");
+                    
+                    // 'Hosted with Streamlit' 뱃지가 a 태그 안에 감싸져 있는 경우 부모 배경까지 날림
+                    if(el.tagName === 'A' && el.parentElement) {
+                        el.parentElement.style.setProperty("display", "none", "important");
+                        el.parentElement.style.setProperty("opacity", "0", "important");
+                        el.parentElement.style.setProperty("background", "transparent", "important");
+                    }
+                });
+            });
+        } catch (e) {}
+    }
+    // 부하가 발생하지 않는 선에서 0.1초마다 백그라운드 스캔 (Render 환경에서는 타겟이 없으므로 자동 패스됨)
+    stealthKillBadges();
+    document.addEventListener("DOMContentLoaded", stealthKillBadges);
+    setInterval(stealthKillBadges, 100);
+    </script>
+    """,
+    height=0,
+    width=0,
+)
+
+# 4. 미니 등대 로고 아이콘 탐색
 def get_mini_logo_html():
     img_candidates = glob.glob("*logo*.png") + glob.glob("*.png")
     for img_path in img_candidates:
@@ -128,7 +162,7 @@ def get_mini_logo_html():
             return f'<img src="data:image/png;base64,{encoded}" class="mini-logo-img" alt="파로스대입랩" />'
     return ""
 
-# 4. 엑셀 데이터 로드 함수
+# 5. 엑셀 데이터 로드 함수
 @st.cache_data
 def load_data(filepath, file_mtime):
     df_raw = pd.read_excel(filepath, header=None, engine='openpyxl')
@@ -166,7 +200,7 @@ def load_data(filepath, file_mtime):
     df_data = df_data[df_data["대학명"] != ""]
     return df_data[["지역", "대학명", "모집단위(학과)", "핵심권장과목", "권장과목", "참조"]]
 
-# 5. 상단 헤더 영역
+# 6. 상단 헤더 영역
 mini_logo = get_mini_logo_html()
 
 st.markdown(
