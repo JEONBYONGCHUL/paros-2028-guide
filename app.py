@@ -12,92 +12,26 @@ st.set_page_config(
     layout="wide",
 )
 
-# 2. 하단 광고 및 Streamlit 뱃지 원천 차단 스크립트
-components.html(
-    """
-    <script>
-    function removeStreamlitBranding() {
-        const docs = [document];
-        try {
-            if (window.parent && window.parent.document) docs.push(window.parent.document);
-        } catch(e) {}
-        try {
-            if (window.top && window.top.document) docs.push(window.top.document);
-        } catch(e) {}
-
-        docs.forEach(doc => {
-            const selectors = [
-                '[class*="viewerBadge"]',
-                '[class*="ViewerBadge"]',
-                '[class*="styles_viewerBadge"]',
-                '[class*="viewer-badge"]',
-                '[data-testid="manage-app-button"]',
-                '#manage-app-button',
-                '[data-testid="stStatusWidget"]',
-                '[data-testid="stDecoration"]',
-                '[data-testid="stToolbar"]',
-                '[data-testid="stAppDeployButton"]',
-                '[data-testid="stBottom"]',
-                'footer',
-                '#MainMenu',
-                '[href*="streamlit.io"]',
-                '[href*="share.streamlit.io"]',
-                'div[class*="manage-app"]',
-                'div[class*="ManageApp"]'
-            ];
-            selectors.forEach(sel => {
-                try {
-                    doc.querySelectorAll(sel).forEach(el => {
-                        el.style.setProperty("display", "none", "important");
-                        el.style.setProperty("visibility", "hidden", "important");
-                        el.style.setProperty("opacity", "0", "important");
-                        el.style.setProperty("pointer-events", "none", "important");
-                        el.style.setProperty("height", "0", "important");
-                        el.style.setProperty("width", "0", "important");
-                    });
-                } catch(err) {}
-            });
-
-            try {
-                doc.querySelectorAll('a, button, div, span').forEach(el => {
-                    const text = el.innerText || el.textContent || '';
-                    if (text.includes('Hosted with Streamlit') || text.includes('Made with Streamlit')) {
-                        el.style.setProperty("display", "none", "important");
-                        el.style.setProperty("visibility", "hidden", "important");
-                    }
-                });
-            } catch(err) {}
-        });
-    }
-
-    removeStreamlitBranding();
-    document.addEventListener("DOMContentLoaded", removeStreamlitBranding);
-    setInterval(removeStreamlitBranding, 300);
-    </script>
-""",
-    height=0,
-    width=0,
-)
-
-# 3. 디자인 스타일 적용 (타이틀과 블로그 사이 한 줄 띄움 여백 반영)
+# 2. 깜빡임 원천 차단을 위한 CSS 최상단 즉시 주입 (위치 이동 및 강화)
 st.markdown(
     """
     <style>
-    /* Streamlit 순정 UI/로고/뱃지/광고 완전 숨김 */
-    #MainMenu {visibility: hidden; display: none !important;}
-    header {visibility: hidden; display: none !important;}
+    /* Streamlit 순정 UI/로고/뱃지/저장소 링크 완전 숨김 (최우선 적용) */
+    #MainMenu {visibility: hidden !important; display: none !important;}
+    header {visibility: hidden !important; display: none !important;}
     header[data-testid="stHeader"] {display: none !important;}
     div[data-testid="stToolbar"] {display: none !important;}
     div[data-testid="stDecoration"] {display: none !important;}
     div[data-testid="stStatusWidget"] {display: none !important;}
     div[data-testid="stAppDeployButton"] {display: none !important;}
     div[data-testid="stBottom"] {display: none !important;}
-    footer, [data-testid="stFooter"] {visibility: hidden; display: none !important;}
-    
-    [class*="viewerBadge"], [class*="ViewerBadge"], [class*="styles_viewerBadge"] {display: none !important; visibility: hidden !important;}
+    footer, [data-testid="stFooter"] {visibility: hidden !important; display: none !important;}
+
+    /* Github 연결 및 Manage App 뱃지 원천 차단 */
+    [class*="viewerBadge"], [class*="ViewerBadge"], [class*="styles_viewerBadge"] {display: none !important; visibility: hidden !important; opacity: 0 !important;}
     .viewerBadge_container__1QSob, .styles_viewerBadge__1yB5_, .viewerBadge_link__1S137, .viewerBadge_text__1JaDK {display: none !important;}
     
-    a[href*="streamlit.io"], a[href*="share.streamlit.io"] {display: none !important;}
+    a[href*="streamlit.io"], a[href*="share.streamlit.io"], a[href*="github.com"] {display: none !important;}
     #manage-app-button, [data-testid="manage-app-button"] {display: none !important;}
     div[class*="manage-app"], div[class*="ManageApp"] {display: none !important;}
 
@@ -107,6 +41,7 @@ st.markdown(
         width: 0px !important;
         border: none !important;
         visibility: hidden !important;
+        display: none !important;
     }
 
     .block-container {
@@ -123,7 +58,7 @@ st.markdown(
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-bottom: 1.2rem; /* 타이틀과 블로그 사이 한 줄 띄움 */
+        margin-bottom: 1.2rem;
         text-align: center;
         width: 100%;
     }
@@ -183,7 +118,7 @@ st.markdown(
             padding-top: 1.2rem !important;
         }
         .main-title-wrap {
-            margin-bottom: 0.9rem; /* 모바일에서도 적절한 한 줄 띄움 */
+            margin-bottom: 0.9rem;
         }
         .main-title {
             font-size: 1.4rem !important;
@@ -357,8 +292,43 @@ st.markdown(
         letter-spacing: 0.02em;
     }
     </style>
-""",
+    """,
     unsafe_allow_html=True,
+)
+
+# 3. 하단 광고 및 Streamlit 뱃지 2차 차단용 JS (이중 안전장치)
+components.html(
+    """
+    <script>
+    function removeStreamlitBranding() {
+        const docs = [document];
+        try { if (window.parent && window.parent.document) docs.push(window.parent.document); } catch(e) {}
+        try { if (window.top && window.top.document) docs.push(window.top.document); } catch(e) {}
+
+        docs.forEach(doc => {
+            const selectors = [
+                '[class*="viewerBadge"]', '[class*="ViewerBadge"]', '[class*="styles_viewerBadge"]',
+                '[data-testid="manage-app-button"]', '#manage-app-button', 'div[class*="manage-app"]'
+            ];
+            selectors.forEach(sel => {
+                try {
+                    doc.querySelectorAll(sel).forEach(el => {
+                        el.style.setProperty("display", "none", "important");
+                        el.style.setProperty("visibility", "hidden", "important");
+                        el.style.setProperty("pointer-events", "none", "important");
+                    });
+                } catch(err) {}
+            });
+        });
+    }
+
+    removeStreamlitBranding();
+    document.addEventListener("DOMContentLoaded", removeStreamlitBranding);
+    setInterval(removeStreamlitBranding, 100);
+    </script>
+    """,
+    height=0,
+    width=0,
 )
 
 
@@ -376,7 +346,7 @@ def get_mini_logo_html():
 # 5. 엑셀 데이터 로드 함수 (수정 시간 감지로 자동 캐시 갱신)
 @st.cache_data
 def load_data(filepath, file_mtime):
-    df_raw = pd.read_excel(filepath, header=None)
+    df_raw = pd.read_excel(filepath, header=None, engine='openpyxl')
 
     start_row = 4
     for idx, row in df_raw.iloc[:10].iterrows():
@@ -438,7 +408,7 @@ def load_data(filepath, file_mtime):
     ]
 
 
-# 6. 상단 헤더 영역 (타이틀과 블로그 사이 한 줄 띄움 반영)
+# 6. 상단 헤더 영역
 mini_logo = get_mini_logo_html()
 
 st.markdown(
