@@ -12,28 +12,44 @@ st.set_page_config(
     layout="wide",
 )
 
-# 2. 깜빡임 원천 차단을 위한 CSS 최상단 즉시 주입 (위치 이동 및 강화)
+# 2. 가장 강력한 뱃지 차단 CSS (z-index 및 강제 투명도 적용)
 st.markdown(
     """
     <style>
-    /* Streamlit 순정 UI/로고/뱃지/저장소 링크 완전 숨김 (최우선 적용) */
+    /* Streamlit 순정 UI/로고/뱃지/저장소 링크 완전 숨김 */
     #MainMenu {visibility: hidden !important; display: none !important;}
     header {visibility: hidden !important; display: none !important;}
     header[data-testid="stHeader"] {display: none !important;}
     div[data-testid="stToolbar"] {display: none !important;}
     div[data-testid="stDecoration"] {display: none !important;}
     div[data-testid="stStatusWidget"] {display: none !important;}
-    div[data-testid="stAppDeployButton"] {display: none !important;}
-    div[data-testid="stBottom"] {display: none !important;}
-    footer, [data-testid="stFooter"] {visibility: hidden !important; display: none !important;}
-
-    /* Github 연결 및 Manage App 뱃지 원천 차단 */
-    [class*="viewerBadge"], [class*="ViewerBadge"], [class*="styles_viewerBadge"] {display: none !important; visibility: hidden !important; opacity: 0 !important;}
-    .viewerBadge_container__1QSob, .styles_viewerBadge__1yB5_, .viewerBadge_link__1S137, .viewerBadge_text__1JaDK {display: none !important;}
     
-    a[href*="streamlit.io"], a[href*="share.streamlit.io"], a[href*="github.com"] {display: none !important;}
-    #manage-app-button, [data-testid="manage-app-button"] {display: none !important;}
-    div[class*="manage-app"], div[class*="ManageApp"] {display: none !important;}
+    /* 화면 하단에 플로팅되는 배포/제작자 뱃지 원천 차단 */
+    div[data-testid="stAppDeployButton"], 
+    div[data-testid="manage-app-button"],
+    #manage-app-button,
+    [class*="viewerBadge"],
+    [class*="ViewerBadge"],
+    [class*="styles_viewerBadge"],
+    [class*="stDeployButton"] {
+        display: none !important; 
+        visibility: hidden !important; 
+        opacity: 0 !important;
+        pointer-events: none !important;
+        height: 0px !important;
+        width: 0px !important;
+        position: absolute !important;
+        z-index: -9999 !important;
+    }
+
+    footer, [data-testid="stFooter"] {
+        visibility: hidden !important; 
+        display: none !important;
+    }
+
+    a[href*="streamlit.io"], a[href*="share.streamlit.io"], a[href*="github.com"] {
+        display: none !important;
+    }
 
     iframe[title="streamlit.components.v1.html"] {
         position: absolute !important;
@@ -41,7 +57,6 @@ st.markdown(
         width: 0px !important;
         border: none !important;
         visibility: hidden !important;
-        display: none !important;
     }
 
     .block-container {
@@ -53,7 +68,7 @@ st.markdown(
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
     * { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
 
-    /* 메인 타이틀: 반응형 폰트 크기 및 하단 한 줄 여백(1.2rem) 설정 */
+    /* 메인 타이틀 */
     .main-title-wrap {
         display: flex;
         justify-content: center;
@@ -74,7 +89,7 @@ st.markdown(
         -webkit-text-fill-color: transparent;
     }
 
-    /* 서브타이틀 중앙 정렬 & 미니 로고 아이콘 */
+    /* 서브타이틀 */
     .sub-title {
         font-size: 0.98rem;
         color: #475569;
@@ -103,14 +118,8 @@ st.markdown(
         border: 1px solid #DBEAFE;
         transition: all 0.2s ease;
     }
-    .sub-title a:hover {
-        color: #1D4ED8;
-        background: #DBEAFE;
-        border-color: #93C5FD;
-        text-decoration: none;
-    }
 
-    /* 모바일 전용 미세 최적화 */
+    /* 모바일 환경 최적화 */
     @media (max-width: 640px) {
         .block-container {
             padding-left: 0.8rem !important;
@@ -205,7 +214,6 @@ st.markdown(
         text-align: center;
         padding: 13px 10px;
         font-size: 0.88rem;
-        letter-spacing: 0.02em;
         border-bottom: 1px solid #334155;
     }
     .custom-table td {
@@ -213,10 +221,6 @@ st.markdown(
         vertical-align: top;
         border-bottom: 1px solid #F1F5F9;
         word-break: keep-all;
-        transition: background 0.15s ease;
-    }
-    .custom-table tr:hover td {
-        background-color: #F8FAFC;
     }
 
     /* 플로팅 결과 카드 */
@@ -227,110 +231,69 @@ st.markdown(
         padding: 1.3rem;
         margin-bottom: 1.1rem;
         box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
-    .result-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px -4px rgba(37, 99, 235, 0.12);
-        border-color: #93C5FD;
-    }
+    .badge-core { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.82rem; margin-right: 6px; }
+    .badge-recommend { background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.82rem; margin-right: 6px; }
+    .badge-ref { background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.82rem; margin-right: 6px; }
 
-    .badge-core {
-        display: inline-block;
-        background: #FEF2F2;
-        color: #DC2626;
-        border: 1px solid #FECACA;
-        padding: 2px 8px;
-        border-radius: 6px;
-        font-weight: 700;
-        font-size: 0.82rem;
-        margin-right: 6px;
-    }
-    .badge-recommend {
-        display: inline-block;
-        background: #EFF6FF;
-        color: #2563EB;
-        border: 1px solid #BFDBFE;
-        padding: 2px 8px;
-        border-radius: 6px;
-        font-weight: 700;
-        font-size: 0.82rem;
-        margin-right: 6px;
-    }
-    .badge-ref {
-        display: inline-block;
-        background: #FFFBEB;
-        color: #B45309;
-        border: 1px solid #FDE68A;
-        padding: 2px 8px;
-        border-radius: 6px;
-        font-weight: 700;
-        font-size: 0.82rem;
-        margin-right: 6px;
-    }
-
-    .univ-tag {
-        font-size: 1.22rem;
-        font-weight: 800;
-        color: #0F172A;
-        letter-spacing: -0.02em;
-    }
-    .major-tag {
-        font-size: 1.05rem;
-        font-weight: 700;
-        color: #2563EB;
-        margin-left: 6px;
-    }
+    .univ-tag { font-size: 1.22rem; font-weight: 800; color: #0F172A; }
+    .major-tag { font-size: 1.05rem; font-weight: 700; color: #2563EB; margin-left: 6px; }
 
     .footer-text {
-        text-align: center;
-        color: #94A3B8;
-        font-size: 0.86rem;
-        margin-top: 3.5rem;
-        border-top: 1px solid #F1F5F9;
-        padding-top: 1.8rem;
-        letter-spacing: 0.02em;
+        text-align: center; color: #94A3B8; font-size: 0.86rem; margin-top: 3.5rem;
+        border-top: 1px solid #F1F5F9; padding-top: 1.8rem;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# 3. 하단 광고 및 Streamlit 뱃지 2차 차단용 JS (이중 안전장치)
+# 3. Created by 텍스트 추적 및 파괴 JS (0.05초 단위 실행)
 components.html(
     """
     <script>
-    function removeStreamlitBranding() {
+    function nukeStreamlitBadges() {
         const docs = [document];
         try { if (window.parent && window.parent.document) docs.push(window.parent.document); } catch(e) {}
         try { if (window.top && window.top.document) docs.push(window.top.document); } catch(e) {}
 
         docs.forEach(doc => {
+            // 1단계: 지정된 CSS 클래스 및 ID 타겟 파괴
             const selectors = [
-                '[class*="viewerBadge"]', '[class*="ViewerBadge"]', '[class*="styles_viewerBadge"]',
-                '[data-testid="manage-app-button"]', '#manage-app-button', 'div[class*="manage-app"]'
+                '[data-testid="stAppDeployButton"]', '[data-testid="manage-app-button"]', 
+                '#manage-app-button', '[class*="viewerBadge"]', '[class*="stDeployButton"]'
             ];
             selectors.forEach(sel => {
                 try {
                     doc.querySelectorAll(sel).forEach(el => {
                         el.style.setProperty("display", "none", "important");
-                        el.style.setProperty("visibility", "hidden", "important");
-                        el.style.setProperty("pointer-events", "none", "important");
+                        el.style.setProperty("opacity", "0", "important");
                     });
                 } catch(err) {}
             });
+
+            // 2단계: 텍스트 기반 내용(Created by) 추적 파괴
+            try {
+                doc.querySelectorAll('div, span, a, button').forEach(el => {
+                    const txt = el.textContent || '';
+                    if (txt.includes('Created by') || txt.includes('Hosted with') || txt.includes('Manage app')) {
+                        el.style.setProperty("display", "none", "important");
+                        el.style.setProperty("visibility", "hidden", "important");
+                    }
+                });
+            } catch(err) {}
         });
     }
 
-    removeStreamlitBranding();
-    document.addEventListener("DOMContentLoaded", removeStreamlitBranding);
-    setInterval(removeStreamlitBranding, 100);
+    nukeStreamlitBadges();
+    document.addEventListener("DOMContentLoaded", nukeStreamlitBadges);
+    // 0.05초마다 검사하여 지연 로딩되는 뱃지까지 원천 삭제
+    setInterval(nukeStreamlitBadges, 50); 
     </script>
     """,
     height=0,
     width=0,
 )
-
 
 # 4. 미니 등대 로고 아이콘 탐색
 def get_mini_logo_html():
@@ -343,7 +306,7 @@ def get_mini_logo_html():
     return ""
 
 
-# 5. 엑셀 데이터 로드 함수 (수정 시간 감지로 자동 캐시 갱신)
+# 5. 엑셀 데이터 로드 함수
 @st.cache_data
 def load_data(filepath, file_mtime):
     df_raw = pd.read_excel(filepath, header=None, engine='openpyxl')
@@ -357,32 +320,12 @@ def load_data(filepath, file_mtime):
 
     df_data = df_raw.iloc[start_row:].copy().reset_index(drop=True)
     df_data = df_data.iloc[:, :8]
-    df_data.columns = [
-        "권역",
-        "지역",
-        "대학명",
-        "계열_단과대",
-        "세부학과",
-        "핵심과목",
-        "권장과목",
-        "비고",
-    ]
+    df_data.columns = ["권역", "지역", "대학명", "계열_단과대", "세부학과", "핵심과목", "권장과목", "비고"]
 
     for col in df_data.columns:
-        df_data[col] = (
-            df_data[col]
-            .fillna("")
-            .astype(str)
-            .str.strip()
-            .replace({"nan": "", "None": ""})
-        )
+        df_data[col] = df_data[col].fillna("").astype(str).str.strip().replace({"nan": "", "None": ""})
 
-    df_data["대학명"] = (
-        df_data["대학명"]
-        .str.replace("\n", " ")
-        .str.replace(r"\s+", " ", regex=True)
-        .str.strip()
-    )
+    df_data["대학명"] = df_data["대학명"].str.replace("\n", " ").str.replace(r"\s+", " ", regex=True).str.strip()
 
     def format_dept(r):
         c_sub = r["세부학과"]
@@ -394,18 +337,12 @@ def load_data(filepath, file_mtime):
         return c_main
 
     df_data["모집단위(학과)"] = df_data.apply(format_dept, axis=1)
-    df_data["핵심권장과목"] = df_data["핵심과목"].replace(
-        {"": "-", "nan": "-"}
-    )
-    df_data["권장과목"] = df_data["권장과목"].replace(
-        {"": "-", "nan": "-"}
-    )
+    df_data["핵심권장과목"] = df_data["핵심과목"].replace({"": "-", "nan": "-"})
+    df_data["권장과목"] = df_data["권장과목"].replace({"": "-", "nan": "-"})
     df_data["참조"] = df_data["비고"].replace({"": "-", "nan": "-"})
 
     df_data = df_data[df_data["대학명"] != ""]
-    return df_data[
-        ["지역", "대학명", "모집단위(학과)", "핵심권장과목", "권장과목", "참조"]
-    ]
+    return df_data[["지역", "대학명", "모집단위(학과)", "핵심권장과목", "권장과목", "참조"]]
 
 
 # 6. 상단 헤더 영역
@@ -438,9 +375,7 @@ st.markdown(
 # 엑셀 파일 로드 및 자동 갱신
 xlsx_files = glob.glob("*.xlsx")
 if not xlsx_files:
-    st.error(
-        "❌ 엑셀 파일(.xlsx)을 찾을 수 없습니다. 저장소에 파일이 등록되어 있는지 확인해 주세요."
-    )
+    st.error("❌ 엑셀 파일(.xlsx)을 찾을 수 없습니다. 저장소에 파일이 등록되어 있는지 확인해 주세요.")
     data = None
 else:
     target_file = xlsx_files[0]
@@ -452,20 +387,14 @@ if data is not None:
     col1, col2, col3 = st.columns([1.5, 2, 2])
 
     with col1:
-        univ_list = ["전체"] + sorted(
-            [u for u in data["대학명"].unique() if u != "-"]
-        )
+        univ_list = ["전체"] + sorted([u for u in data["대학명"].unique() if u != "-"])
         selected_univ = st.selectbox("🏫 대학 선택", univ_list)
 
     with col2:
-        search_dept = st.text_input(
-            "🔍 모집단위(학과) 검색", placeholder="예: 컴퓨터, 경영, 의예, 간호, 데이터, 전모집단위"
-        )
+        search_dept = st.text_input("🔍 모집단위(학과) 검색", placeholder="예: 컴퓨터, 경영, 의예, 간호, 데이터, 전모집단위")
 
     with col3:
-        search_subject = st.text_input(
-            "📚 권장과목 검색", placeholder="예: 미적분, 물리학, 화학, 기하"
-        )
+        search_subject = st.text_input("📚 권장과목 검색", placeholder="예: 미적분, 물리학, 화학, 기하")
 
     # 필터링 로직
     filtered_df = data.copy()
@@ -474,19 +403,13 @@ if data is not None:
         filtered_df = filtered_df[filtered_df["대학명"] == selected_univ]
 
     if search_dept.strip():
-        filtered_df = filtered_df[
-            filtered_df["모집단위(학과)"].str.contains(
-                search_dept.strip(), case=False, na=False
-            )
-        ]
+        filtered_df = filtered_df[filtered_df["모집단위(학과)"].str.contains(search_dept.strip(), case=False, na=False)]
 
     if search_subject.strip():
         sub_q = search_subject.strip()
         filtered_df = filtered_df[
-            filtered_df["핵심권장과목"].str.contains(
-                sub_q, case=False, na=False
-            )
-            | filtered_df["권장과목"].str.contains(sub_q, case=False, na=False)
+            filtered_df["핵심권장과목"].str.contains(sub_q, case=False, na=False) | 
+            filtered_df["권장과목"].str.contains(sub_q, case=False, na=False)
         ]
 
     # 실시간 데이터 상태 표시바
@@ -528,26 +451,11 @@ if data is not None:
             f'<div class="custom-table-container">'
             f'<table class="custom-table">'
             f"<colgroup>"
-            f'<col style="width: 14%;">'  # 대학명
-            f'<col style="width: 22%;">'  # 모집단위
-            f'<col style="width: 25%;">'  # 핵심권장
-            f'<col style="width: 16%;">'  # 권장
-            f'<col style="width: 23%;">'  # 참조
+            f'<col style="width: 14%;"><col style="width: 22%;"><col style="width: 25%;"><col style="width: 16%;"><col style="width: 23%;">'
             f"</colgroup>"
-            f"<thead>"
-            f"<tr>"
-            f"<th>대학명</th>"
-            f"<th>모집단위</th>"
-            f"<th>핵심권장</th>"
-            f"<th>권장</th>"
-            f"<th>참조</th>"
-            f"</tr>"
-            f"</thead>"
-            f"<tbody>"
-            f'{"".join(rows_html)}'
-            f"</tbody>"
-            f"</table>"
-            f"</div>"
+            f"<thead><tr><th>대학명</th><th>모집단위</th><th>핵심권장</th><th>권장</th><th>참조</th></tr></thead>"
+            f"<tbody>{''.join(rows_html)}</tbody>"
+            f"</table></div>"
         )
         st.markdown(table_html, unsafe_allow_html=True)
 
@@ -556,34 +464,18 @@ if data is not None:
         with st.expander("📌 대학별 상세 카드 뷰로 확인하기 (참조 내용 강조)"):
             for idx, row in filtered_df.head(25).iterrows():
                 ref_text = row["참조"]
-
-                if ref_text != "-":
-                    ref_clean = ref_text.replace("\n", "<br>")
-                    ref_part = f'<div style="margin-top: 10px; line-height: 1.6; color: #374151; background-color: #FFFBEB; padding: 10px 14px; border-radius: 8px; border: 1px solid #FDE68A;"><span class="badge-ref">참조</span> {ref_clean}</div>'
-                else:
-                    ref_part = ""
+                ref_part = f'<div style="margin-top: 10px; line-height: 1.6; color: #374151; background-color: #FFFBEB; padding: 10px 14px; border-radius: 8px; border: 1px solid #FDE68A;"><span class="badge-ref">참조</span> {ref_text.replace(chr(10), "<br>")}</div>' if ref_text != "-" else ""
 
                 card_html = (
                     f'<div class="result-card">'
-                    f'<div style="margin-bottom: 8px;">'
-                    f'<span class="univ-tag">{row["대학명"]}</span>'
-                    f'<span class="major-tag">| {row["모집단위(학과)"]}</span>'
-                    f'<span style="color: #64748B; font-size: 0.85rem; margin-left: 8px;">({row["지역"]})</span>'
-                    f"</div>"
-                    f'<div style="line-height: 1.8; margin-top: 6px;">'
-                    f'<span class="badge-core">핵심 권장</span> <span style="font-weight: 500; color: #1E293B;">{row["핵심권장과목"]}</span><br>'
-                    f'<span class="badge-recommend">일반 권장</span> <span style="font-weight: 500; color: #1E293B;">{row["권장과목"]}</span>'
-                    f"</div>"
-                    f"{ref_part}"
-                    f"</div>"
+                    f'<div style="margin-bottom: 8px;"><span class="univ-tag">{row["대학명"]}</span><span class="major-tag">| {row["모집단위(학과)"]}</span><span style="color: #64748B; font-size: 0.85rem; margin-left: 8px;">({row["지역"]})</span></div>'
+                    f'<div style="line-height: 1.8; margin-top: 6px;"><span class="badge-core">핵심 권장</span> <span style="font-weight: 500; color: #1E293B;">{row["핵심권장과목"]}</span><br><span class="badge-recommend">일반 권장</span> <span style="font-weight: 500; color: #1E293B;">{row["권장과목"]}</span></div>'
+                    f"{ref_part}</div>"
                 )
-
                 st.markdown(card_html, unsafe_allow_html=True)
 
             if len(filtered_df) > 25:
-                st.caption(
-                    "상세 카드 뷰는 상위 25건까지만 표시됩니다. 전체 목록은 상단 표에서 확인하실 수 있습니다."
-                )
+                st.caption("상세 카드 뷰는 상위 25건까지만 표시됩니다. 전체 목록은 상단 표에서 확인하실 수 있습니다.")
 
     # 10. 하단 브랜딩 푸터
     st.markdown(
